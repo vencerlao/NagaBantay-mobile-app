@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       titleTextStyle: GoogleFonts.montserrat(
         textStyle: Theme.of(context).textTheme.titleLarge,
         fontWeight: FontWeight.w700,
-        fontSize: 20,
+        fontSize: 18,
         color: Colors.white,
       ),
     );
