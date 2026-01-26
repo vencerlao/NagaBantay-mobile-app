@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -8,31 +9,6 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       // Make the entire screen white so the white background occupies the whole viewport
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/nagabantay_app_logo.png',
-              width: 36,
-              height: 36,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'NagaBantay',
-              style: TextStyle(
-                color: Color(0xFF2E7D32), // green color
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -40,8 +16,51 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top spacing and title (kept for backward compatibility)
-              const SizedBox(height: 8),
+              // Top header: left image and right SIGN UP button
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+                child: Row(
+                  children: [
+                    // Left: nagabantay header image (constrained & fits)
+                    Flexible(
+                      flex: 0,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 220, maxHeight: 56),
+                        child: Image.asset(
+                          'assets/images/nagabantay_header.png',
+                          height: 48,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // Right: SIGN UP button that navigates to SignUpPage
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SignUpPage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        minimumSize: const Size(100, 44),
+                      ),
+                      child: Text(
+                        'SIGN UP',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               // Fill rest of the screen for content
               const Expanded(child: SizedBox()),
             ],
