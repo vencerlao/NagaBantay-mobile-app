@@ -64,6 +64,17 @@ flutter:
     - assets/images/nagabantay_logo.png
     - assets/images/nagabantay_app_logo.png
     - assets/images/logo-sign.png
+    - assets/images/nagabantay_header.png
+
+
+
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-VariableFont_wght.ttf
+        - asset: assets/fonts/Montserrat-Italic-VariableFont_wght.ttf
+
+
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

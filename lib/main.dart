@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 import 'package:nagabantay_mobile_app/pages/splash_page.dart';
 
@@ -12,10 +11,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme);
+    // AppBar theme using local Montserrat font
     final appBarTheme = AppBarTheme(
-      titleTextStyle: GoogleFonts.montserrat(
-        textStyle: Theme.of(context).textTheme.titleLarge,
+      titleTextStyle: const TextStyle(
+        fontFamily: 'Montserrat', // local font family
         fontWeight: FontWeight.w700,
         fontSize: 18,
         color: Colors.white,
@@ -28,9 +27,27 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        textTheme: textTheme,
         appBarTheme: appBarTheme,
         scaffoldBackgroundColor: Colors.white,
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+          headlineMedium: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 16,
+            color: Colors.black,
+          ),
+        ),
       ),
       home: const SplashPage(),
     );
@@ -58,7 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Ensure the white background fills the full screen
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -68,7 +84,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Simple placeholder content for the homepage
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Image.asset(
@@ -79,12 +94,16 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             const SizedBox(height: 12),
+            // Using local Montserrat via theme
             Text(
               'Welcome to Nagabantay',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 20),
-            Text('You have pushed the button this many times:'),
+            Text(
+              'You have pushed the button this many times:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
@@ -96,7 +115,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   MaterialPageRoute(builder: (_) => const SignUpPage()),
                 );
               },
-              child: const Text('Go to Sign Up'),
+              child: const Text(
+                'Go to Sign Up',
+                style: TextStyle(
+                  fontFamily: 'Montserrat', // ensure local font
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ],
         ),
@@ -106,7 +132,6 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ),
-      // Removed invalid `home:` parameter that caused analyzer errors
     );
   }
 }
