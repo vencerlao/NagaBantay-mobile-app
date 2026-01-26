@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pages/signup_page.dart'; // Import your SignUpPage
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nagabantay_mobile_app/pages/splash_page.dart';
 
@@ -9,7 +10,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     final textTheme = GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme);
@@ -23,8 +23,9 @@ class MyApp extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Nagabantay Sign-Up',
       theme: ThemeData(
+        primarySwatch: Colors.green,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         textTheme: textTheme,
         appBarTheme: appBarTheme,
@@ -76,6 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ),
+      home: const SignUpPage(), // Your SignUp page as the first screen
     );
   }
 }
