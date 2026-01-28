@@ -1,0 +1,486 @@
+import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:nagabantay_mobile_app/pages/changepin_page.dart';
+import 'package:nagabantay_mobile_app/pages/home_page.dart';
+
+class ReportContinuePage extends StatefulWidget {
+  const ReportContinuePage({super.key});
+
+  @override
+  State<ReportContinuePage> createState() => _ReportContinuePageState();
+}
+
+class _ReportContinuePageState extends State<ReportContinuePage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _descriptionController = TextEditingController();
+  final MapController _mapController = MapController();
+
+  LatLng? _selectedLocation; // default location
+  String _address = 'Fetching address...';
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // user must tap button
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(
+                PhosphorIcons.checkCircleFill,
+                color: Color(0xFF39A736),
+                size: 64,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Report Submitted!',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 18,
+                  fontVariations: [FontVariation('wght', 600)],
+                  color: Color(0xFF23552C),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Your report has been successfully submitted. Thank you for helping keep the community safe.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 14,
+                  fontVariations: [FontVariation('wght', 400)],
+                  color: Color(0xFF23552C),
+                ),
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF23552C),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context); // close dialog
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HomePage(),
+                  ),
+                );
+              },
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 14,
+                  fontVariations: [FontVariation('wght', 500)],
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation(); // fetch device location when page loads
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  // ===== Get device location =====
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location service is enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() {
+        _address = 'Location services are disabled';
+      });
+      return;
+    }
+
+    // Check permissions
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          _address = 'Location permissions denied';
+        });
+        return;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      setState(() {
+        _address = 'Location permissions permanently denied';
+      });
+      return;
+    }
+
+    // ✅ Get current position
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    // ✅ Update selected location
+    setState(() {
+      _selectedLocation = LatLng(position.latitude, position.longitude);
+    });
+
+    // ✅ Get address
+    _getAddressFromLatLng(_selectedLocation!);
+  }
+
+  // ===== Reverse geocode to get address =====
+  Future<void> _getAddressFromLatLng(LatLng location) async {
+    try {
+      List<Placemark> placemarks =
+      await placemarkFromCoordinates(location.latitude, location.longitude);
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        setState(() {
+          _address =
+          '${place.street ?? ''}, ${place.locality ?? ''}, ${place.country ?? ''}';
+        });
+      } else {
+        setState(() {
+          _address = 'Unknown location';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _address = 'Error fetching address';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(
+            PhosphorIcons.caretLeft,
+            size: 22.0,
+            color: const Color(0xff06370b),
+          ),
+        ),
+      ),
+      body: _selectedLocation == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ===== Choose Location =====
+              const Text(
+                'Choose location',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 16,
+                  fontVariations: [FontVariation('wght', 500)],
+                  color: Color(0xFF23552C),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  children: [
+                    // Map
+                    SizedBox(
+                      height: 220,
+                      width: double.infinity,
+                      child: FlutterMap(
+                        options: MapOptions(
+                          center: _selectedLocation!, // non-null because of loading check
+                          zoom: 16,
+                          minZoom: 10,
+                          maxZoom: 18,
+                          interactiveFlags: InteractiveFlag.all,
+                          onTap: (tapPosition, point) {
+                            setState(() {
+                              _selectedLocation = point;
+                            });
+                            _getAddressFromLatLng(point);
+                          },
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+                            subdomains: const ['a', 'b', 'c'],
+                            userAgentPackageName: 'com.adjust.nagabantay',
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: _selectedLocation!, // non-null assertion
+                                width: 40,
+                                height: 40,
+                                child: const Icon(
+                                  PhosphorIcons.mapPinFill,
+                                  size: 32,
+                                  color: Color(0xFF39A736),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                    ),
+
+                    // Change Pin Button
+                    Positioned(
+                      bottom: 12,
+                      right: 12,
+                      child: ElevatedButton.icon(
+                        onPressed: () async { // <- make this async
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ChangePinPage()),
+                          );
+
+                          if (result != null) {
+                            setState(() {
+                              _selectedLocation = result['location'] as LatLng;
+                              _address = result['address'] as String;
+                            });
+
+                            // Move map to new location
+                            _mapController.move(_selectedLocation!, 16);
+                          }
+                        },
+
+                        icon: const Icon(
+                          PhosphorIcons.mapPinFill,
+                          size: 18.0,
+                          color: Color(0xff06370b),
+                        ),
+                        label: const Text(
+                          'Change Pin',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            fontVariations: [FontVariation('wght', 400)],
+                            color: Color(0xFF23552C),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Location Address (dynamic)
+              Row(
+                children: [
+                  const Icon(
+                    PhosphorIcons.mapPinFill,
+                    size: 18,
+                    color: Color(0xff06370b),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _address,
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat',
+                        fontSize: 14,
+                        fontVariations: [FontVariation('wght', 400)],
+                        color: Color(0xFF23552C),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 28),
+
+              // ===== Description =====
+              const Text(
+                'Tell us what happened',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 16,
+                  fontVariations: [FontVariation('wght', 500)],
+                  color: Color(0xFF23552C),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: _descriptionController,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText: 'Describe the incident in detail...',
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 14,
+                    fontVariations: [FontVariation('wght', 400)],
+                    color: Color(0xFF23552C),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF23552C),
+                      width: 1.2,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF23552C),
+                      width: 1.2,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF06370B),
+                      width: 1.6,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Colors.red,
+                      width: 1.2,
+                    ),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Colors.red,
+                      width: 1.6,
+                    ),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please provide a description';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // ===== Attach Media =====
+              const Text(
+                'Attach photos or videos (optional)',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 16,
+                  fontVariations: [FontVariation('wght', 500)],
+                  color: Color(0xFF23552C),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              DottedBorder(
+                color: const Color(0xFF23552C),
+                strokeWidth: 1,
+                dashPattern: const [6, 4],
+                borderType: BorderType.RRect,
+                radius: const Radius.circular(8),
+                child: InkWell(
+                  onTap: () {},
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 120,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          PhosphorIcons.fileImage,
+                          size: 32.0,
+                          color: Color(0xff06370b),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tap to upload',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 14,
+                            fontVariations: const [FontVariation('wght', 400)],
+                            color: const Color(0xFF23552C).withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // ===== Continue Button =====
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (!_formKey.currentState!.validate()) return;
+
+                    _showSuccessDialog();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF23552C),
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Continue'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
