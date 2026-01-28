@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-
+import 'package:nagabantay_mobile_app/pages/setup_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -13,6 +12,8 @@ class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _phoneController = TextEditingController();
 
+  String? _phoneError;
+
   @override
   void dispose() {
     _phoneController.dispose();
@@ -20,16 +21,29 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _onContinue() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Form submitted!')),
+    setState(() {
+      if (_phoneController.text.isEmpty) {
+        _phoneError = 'Please enter your phone number';
+      } else if (_phoneController.text.length < 10) {
+        _phoneError = 'Invalid phone number';
+      } else {
+        _phoneError = null;
+      }
+    });
+
+    if (_phoneError == null) {
+      final phoneNumber = _phoneController.text.trim();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SetupPage(phoneNumber: phoneNumber),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Screen height for responsive spacing
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
@@ -37,49 +51,48 @@ class _SignUpPageState extends State<SignUpPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // === Blank space above everything ===
-              SizedBox(height: screenHeight * 0.15), // <-- Adjust to raise/lower all content
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+              SizedBox(height: screenHeight * 0.15),
 
               Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start, // align column with top of logo
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo
                     Image.asset(
                       'assets/images/nagabantay_logo.png',
                       height: 60,
                     ),
-                    const SizedBox(width: 15), // space between logo and text
-                    // Column for text
+                    const SizedBox(width: 15),
+
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.start, // align text to the left
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // First line
                         Text(
-                          'Nagabantay',
+                          'NagaBantay',
                           style: TextStyle(
                             fontFamily: 'Montserrat',
                             fontSize: 28,
                             color: const Color(0xFF23552C),
                             fontVariations: const [
-                              FontVariation('wght', 700), // bold
+                              FontVariation('wght', 700),
                             ],
                           ),
                         ),
-                        // Second line
+
                         Text(
-                          'Parabantay nin gabos na barangay', // change to whatever you want
+                          'Parabantay nin gabos na barangay',
                           style: TextStyle(
                             fontFamily: 'Montserrat',
                             fontSize: 12,
                             color: const Color(0xFF23552C),
                             fontVariations: const [
-                              FontVariation('wght', 400), // normal weight
+                              FontVariation('wght', 400),
                             ],
                           ),
                         ),
@@ -89,133 +102,137 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
 
-              // === Space between logo and welcome message ===
-              SizedBox(height: screenHeight * 0.08), // adjust spacing
+              SizedBox(height: screenHeight * 0.08),
 
-              // === Welcome Message ===
               const Align(
-                alignment: Alignment.centerLeft, // horizontal alignment
+                alignment: Alignment.centerLeft,
                 child: Text(
                   'Welcome to Nagabantay!',
                   style: TextStyle(fontFamily: 'Montserrat',
                     fontSize: 18,
-                    color: const Color(0xFF23552C),
-                    fontVariations: const [
-                      FontVariation('wght', 700), // normal weight
+                    color: Color(0xFF23552C),
+                    fontVariations: [
+                      FontVariation('wght', 700),
                     ],
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
 
-              // === Space between headline and instruction ===
-              SizedBox(height: screenHeight * 0.015), // adjust spacing
+              SizedBox(height: screenHeight * 0.015),
 
-              // === Instructional Message ===
               const Align(
-                alignment: Alignment.center, // horizontal alignment
+                alignment: Alignment.center,
                 child: Text(
                   'Enter your phone number to log-in to an existing account or instantly set up your new account.',
                   style: TextStyle(fontFamily: 'Montserrat', fontSize: 12,
-                    color: const Color(0xFF23552C),
-                    fontVariations: const [
-                      FontVariation('wght', 400), // normal weight
+                    color: Color(0xFF23552C),
+                    fontVariations: [
+                      FontVariation('wght', 400),
                     ],),
                   textAlign: TextAlign.left,
                 ),
               ),
 
-              // === Space between message and input box ===
-              SizedBox(height: screenHeight * 0.05), // adjust spacing
+              SizedBox(height: screenHeight * 0.05),
 
-              // === Instructional Message ===
               const Align(
-                alignment: Alignment.centerLeft, // horizontal alignment
+                alignment: Alignment.centerLeft,
                 child: Text(
                   'Phone Number',
                   style: TextStyle(fontFamily: 'Montserrat', fontSize: 16,
-                    color: const Color(0xFF23552C),
-                    fontVariations: const [
-                      FontVariation('wght', 400), // normal weight
+                    color: Color(0xFF23552C),
+                    fontVariations: [
+                      FontVariation('wght', 400),
                     ],),
                   textAlign: TextAlign.left,
                 ),
               ),
 
-              // === Space between message and input box ===
-              SizedBox(height: screenHeight * 0.03), // adjust spacing
+              SizedBox(height: screenHeight * 0.03),
 
-              // === Phone Input Box ===
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFB0CEAC),
-                      border: Border.all(color: const Color(0xFF23552C)),
-                      borderRadius: BorderRadius.circular(8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB0CEAC),
+                            border: Border.all(color: const Color(0xFF23552C)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '+63',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 14,
+                              fontVariations: [FontVariation('wght', 400)],
+                              color: Color(0xFF23552C),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SizedBox(
+                            height: 52, // 🔒 fixed height — no jumping
+                            child: TextFormField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              style: const TextStyle(
+                                fontFamily: 'Montserrat',
+                                fontSize: 14,
+                                color: Color(0xFF23552C),
+                                fontVariations: [FontVariation('wght', 400)],
+                              ),
+                              decoration: InputDecoration(
+                                hintText: '9xx xxx xxxx',
+                                hintStyle: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 14,
+                                  fontVariations: const [FontVariation('wght', 400)],
+                                  color: const Color(0xFF23552C).withValues(alpha: 0.5),
+                                ),
+                                filled: true,
+                                fillColor: const Color(0xFFB0CEAC),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Color(0xFF23552C)),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Color(0xFF23552C), width: 2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      '+63', // no const here
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',          // your installed font
-                        fontSize: 14,                       // change to whatever size you want
-                        fontVariations: const [
-                          FontVariation('wght', 400),       // bold or normal
-                        ],
-                        color: const Color(0xFF23552C),    // your desired color
+
+                    if (_phoneError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6, left: 4),
+                        child: Text(
+                          _phoneError!,
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 12,
+                            color: Colors.red,
+                            fontVariations: [
+                              FontVariation('wght', 400),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                  ],
+                ),
 
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: '9xx xxx xxxx',
-                        hintStyle: TextStyle(
-                          fontFamily: 'Montserrat',               // your installed font
-                          fontSize: 14,                           // size of the hint
-                          fontVariations: const [FontVariation('wght', 400)], // normal weight
-                          color: const Color(0xFF23552C).withOpacity(0.5),   // hint color (semi-transparent)
-                        ),
-                        filled: true,
-                        fillColor: Color(0xFFB0CEAC),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF23552C)), // border color when not focused
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF23552C), width: 2), // border color when focused
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        suffixIcon: const Icon(
-                          PhosphorIcons.eye, // Phosphor icon
-                          size: 28.0,
-                          color: Color(0xFF06370B),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        if (value.length < 7) {
-                          return 'Invalid phone number';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              SizedBox(height: screenHeight * 0.05),
 
-              // === Space between input box and continue button ===
-              SizedBox(height: screenHeight * 0.05), // adjust spacing
-
-              // === Continue Button ===
               SizedBox(
                 width: double.infinity,
                 height: 35,
@@ -224,14 +241,14 @@ class _SignUpPageState extends State<SignUpPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF255E1F),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14), // optional: rounded corners
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: const Text(
                     'Continue',
                     style: TextStyle(
                       fontFamily: 'Montserrat',
-                      fontSize: 14,          // smaller font to fit
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -240,10 +257,8 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
 
-              // === Space between button and terms message ===
-              SizedBox(height: screenHeight * 0.2), // adjust spacing
+              SizedBox(height: screenHeight * 0.2),
 
-              // === Terms & Privacy ===
               Align(
                 alignment: Alignment.center,
                 child: RichText(
@@ -251,8 +266,8 @@ class _SignUpPageState extends State<SignUpPage> {
                   text: TextSpan(
                     text: 'By continuing, you agree to our ',
                     style: const TextStyle(
-                      fontFamily: 'Montserrat', // your installed font
-                      fontSize: 11,             // change font size
+                      fontFamily: 'Montserrat',
+                      fontSize: 11,
                       color: Color(0xFF23552C),
                       fontVariations: [FontVariation('wght', 400)],
                     ),
@@ -291,12 +306,11 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
 
-
-              // Optional: Extra space at the bottom for small screens
               SizedBox(height: screenHeight * 0.05),
             ],
           ),
         ),
+      ),
       ),
     );
   }
