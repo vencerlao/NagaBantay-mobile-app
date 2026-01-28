@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../pages/home_page.dart';
-import '../pages/report_page.dart';
+import '../pages/category-report_page.dart';
 import '../pages/alerts_page.dart';
 import '../pages/account_page.dart';
 

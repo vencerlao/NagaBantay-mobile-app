@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nagabantay_mobile_app/pages/signup_page.dart';
+import 'package:nagabantay_mobile_app/pages/login_page.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class HomePage extends StatelessWidget {
@@ -162,7 +162,7 @@ class HomePage extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const SignUpPage(),
+                            builder: (_) => const LoginPage(),
                           ),
                         );
                       },
