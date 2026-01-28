@@ -7,14 +7,15 @@ import '../pages/alerts_page.dart';
 import '../pages/account_page.dart';
 
 class NagabantayNavBar extends StatefulWidget {
-  const NagabantayNavBar({super.key});
+  final int initialIndex;
+  const NagabantayNavBar({super.key, this.initialIndex = 0});
 
   @override
   State<NagabantayNavBar> createState() => _NagabantayNavBarState();
 }
 
 class _NagabantayNavBarState extends State<NagabantayNavBar> {
-  int _currentIndex = 0;
+  late int _currentIndex;
 
   final List<Widget> _pages = const [
     HomePage(),
@@ -22,6 +23,12 @@ class _NagabantayNavBarState extends State<NagabantayNavBar> {
     AlertsPage(),
     AccountPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex.clamp(0, _pages.length - 1);
+  }
 
   @override
   Widget build(BuildContext context) {
