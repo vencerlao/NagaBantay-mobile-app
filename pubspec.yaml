@@ -71,7 +71,6 @@ flutter:
   # Assets for logos used in the splash screen and app UI
   assets:
     - assets/images/nagabantay_logo.png
-    - assets/images/nagabantay_app_logo.png
     - assets/images/logo-sign.png
     - assets/images/nagabantay_header.png
 
