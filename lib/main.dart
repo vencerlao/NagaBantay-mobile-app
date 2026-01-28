@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 import 'package:nagabantay_mobile_app/pages/splash_page.dart';
+import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
 
 void main() {
   runApp(const MyApp());
