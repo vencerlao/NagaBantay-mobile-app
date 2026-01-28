@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:nagabantay_mobile_app/pages/changepin_page.dart';
-import 'package:nagabantay_mobile_app/pages/home_page.dart';
+import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
 
 class ReportContinuePage extends StatefulWidget {
   const ReportContinuePage({super.key});
@@ -73,12 +73,12 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                 ),
               ),
               onPressed: () {
-                Navigator.pop(context); // close dialog
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HomePage(),
-                  ),
+                // Replace the entire stack with the NavBar, opening on Home.
+                // This guarantees the BottomNavigationBar is visible and we
+                // avoid rebuilding multiple home pages on the stack.
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const NagabantayNavBar(initialIndex: 0)),
+                  (route) => false,
                 );
               },
               child: const Text(
