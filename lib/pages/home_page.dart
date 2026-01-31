@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nagabantay_mobile_app/pages/login_page.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class HomePage extends StatelessWidget {
@@ -158,38 +157,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const LoginPage(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        Theme.of(context).colorScheme.primary,
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 10,
-                        ),
-                        minimumSize: const Size(110, 20),
-                      ),
-                      child: Text(
-                        'SIGN UP',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelLarge
-                            ?.copyWith(
-                          color: Colors.white,
-                          fontFamily: 'Montserrat',
-                          fontVariations: const [
-                            FontVariation('wght', 700)
-                          ],
-                        ),
-                      ),
-                    ),
+                    // Removed SIGN UP button as requested
                   ],
                 ),
               ),
