@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "92668872053",
+    "project_id": "nagabantay",
+    "storage_bucket": "nagabantay.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:92668872053:android:517afa54c3e1713add7f3c",
+        "android_client_info": {
+          "package_name": "com.example.nagabantay_mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhvHgeH_nfCMO3d1KwDQGZeKhXa6bvT58"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
