@@ -17,7 +17,7 @@ class NagabantayNavBar extends StatefulWidget {
 class _NagabantayNavBarState extends State<NagabantayNavBar> {
   late int _currentIndex;
 
-  final List<Widget> _pages = const [
+  final List<Widget> _pages = [
     HomePage(),
     ReportPage(),
     AlertsPage(),
@@ -36,30 +36,24 @@ class _NagabantayNavBarState extends State<NagabantayNavBar> {
       body: _pages[_currentIndex],
 
       bottomNavigationBar: SizedBox(
-        height: 80, // adjust (72–88 is a good range)
+        height: 80,
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           type: BottomNavigationBarType.fixed,
           backgroundColor: const Color(0xFFDBF5D7),
           selectedItemColor: const Color(0xFF255E1F),
           unselectedItemColor: const Color(0xFF737373),
-
           iconSize: 22,
 
           selectedLabelStyle: const TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 14,
-            fontVariations: [
-              FontVariation('wght', 700),
-            ],
+            fontVariations: [FontVariation('wght', 700)],
           ),
-
           unselectedLabelStyle: const TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 12,
-            fontVariations: [
-              FontVariation('wght', 700),
-            ],
+            fontVariations: [FontVariation('wght', 700)],
           ),
 
           onTap: (index) {
