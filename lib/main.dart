@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:nagabantay_mobile_app/pages/splash_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  print("BEFORE dotenv");
+  await dotenv.load(fileName: "assets/.env");
+  print("AFTER dotenv");
+
 import 'package:nagabantay_mobile_app/auth_gate.dart';
 import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 import 'package:nagabantay_mobile_app/pages/home_page.dart';
