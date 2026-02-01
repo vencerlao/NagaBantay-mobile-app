@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:nagabantay_mobile_app/pages/continue-report_page.dart';
 
 class ReportPage extends StatefulWidget {
@@ -97,19 +96,16 @@ class _ReportPageState extends State<ReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // AppBar removed to eliminate the white header; content renders directly
+      // under the status bar. If you want to avoid overlap with system UI,
+      // we can wrap the body with SafeArea — tell me if you'd like that.
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            PhosphorIcons.caretLeft,
-            size: 22.0,
-            color: const Color(0xff06370b),
-          ),
-        ),
+        automaticallyImplyLeading: false,
+        toolbarHeight: 48, // compact height
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
