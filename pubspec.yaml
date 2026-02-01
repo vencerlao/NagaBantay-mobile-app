@@ -81,7 +81,6 @@ flutter:
   assets:
     - assets/images/nagabantay_logo.png
     - assets/images/nagabantay_header.png
-    - assets/flood.geojson
     - assets/naga_flood.geojson
     - assets/naga_evacuation1.geojson
     - assets/images/circle-duotone.png
