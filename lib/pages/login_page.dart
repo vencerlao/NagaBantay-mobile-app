@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:nagabantay_mobile_app/pages/category-report_page.dart';
+import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String? initialPhone; // optional, for prefilled phone
+  const LoginPage({super.key, this.initialPhone});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -14,9 +17,69 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
 
   bool _obscurePassword = true;
-
   String? _phoneError;
   String? _passwordError;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialPhone != null) {
+      phoneController.text = widget.initialPhone!;
+    }
+  }
+
+  Future<void> _login() async {
+    setState(() {
+      _phoneError = phoneController.text.isEmpty ? 'Phone number is required' : null;
+      _passwordError = passwordController.text.isEmpty ? 'Password is required' : null;
+    });
+
+    if (_phoneError != null || _passwordError != null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Normalize phone to digits-only to match how we saved it in setup
+      final normalizedPhone = phoneController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(normalizedPhone)
+          .get();
+
+      if (!doc.exists) {
+        setState(() {
+          _phoneError = 'No account found with this phone number';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final data = doc.data();
+      if (data == null || data['password'] != passwordController.text.trim()) {
+        setState(() {
+          _passwordError = 'Incorrect password';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Login successful -> navigate to report page
+      setState(() => _isLoading = false);
+      // Replace navigation stack with app's main NavBar (home)
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const NagabantayNavBar(initialIndex: 0)),
+        (route) => false,
+      );
+
+    } catch (e) {
+      setState(() => _isLoading = false);
+      // optional: handle firestore error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error logging in. Please try again.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                     fontFamily: 'Montserrat',
                     fontSize: 28,
                     color: Color(0xFF23552C),
-                    fontVariations: [
-                      FontVariation('wght', 700),
-                    ],
+                    fontVariations: [FontVariation('wght', 700)],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -61,24 +122,19 @@ class _LoginPageState extends State<LoginPage> {
                     fontFamily: 'Montserrat',
                     fontSize: 16,
                     color: Color(0xFF23552C),
-                    fontVariations: [
-                      FontVariation('wght', 400),
-                    ],
+                    fontVariations: [FontVariation('wght', 400)],
                   ),
                 ),
                 const SizedBox(height: 32),
 
-                const Text(
-                  "Enter your phone number",
+                const Text("Enter your phone number",
                   style: TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 16,
                     color: Color(0xFF23552C),
-                    fontVariations: [
-                      FontVariation('wght', 400),
-                    ],
-                    ),
+                    fontVariations: [FontVariation('wght', 400)],
                   ),
+                ),
                 const SizedBox(height: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,8 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                             border: Border.all(color: const Color(0xFF23552C)),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            "+63",
+                          child: const Text("+63",
                             style: TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 14,
@@ -119,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                                 fontFamily: 'Montserrat',
                                 fontSize: 14,
                                 fontVariations: const [FontVariation('wght', 400)],
-                                color: const Color(0xFF23552C).withValues(alpha: 0.5),
+                                color: const Color(0xFF23552C).withAlpha(128),
                               ),
                               filled: true,
                               fillColor: const Color(0xFFB0CEAC),
@@ -153,15 +208,12 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 20),
 
-                const Text(
-                  "Password",
+                const Text("Password",
                   style: TextStyle(
                     fontFamily: 'Montserrat',
                     fontSize: 16,
                     color: Color(0xFF23552C),
-                    fontVariations: [
-                      FontVariation('wght', 400),
-                    ],
+                    fontVariations: [FontVariation('wght', 400)],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -183,7 +235,7 @@ class _LoginPageState extends State<LoginPage> {
                           fontFamily: 'Montserrat',
                           fontSize: 14,
                           fontVariations: const [FontVariation('wght', 400)],
-                          color: const Color(0xFF23552C).withValues(alpha: 0.5),
+                          color: const Color(0xFF23552C).withAlpha(128),
                         ),
                         filled: true,
                         fillColor: const Color(0xFFB0CEAC),
@@ -197,23 +249,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         suffixIcon: IconButton(
                           icon: _obscurePassword
-                              ? Icon(
-                            PhosphorIcons.eyeSlash,
-                            size: 22.0,
-                            color: const Color(0xff06370b),
-                          )
-                              : Icon(
-                            PhosphorIcons.eye,
-                            size: 22.0,
-                            color: const Color(0xff06370b),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                              ? Icon(PhosphorIcons.eyeSlash, size: 22.0, color: const Color(0xff06370b))
+                              : Icon(PhosphorIcons.eye, size: 22.0, color: const Color(0xff06370b)),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
-
                       ),
                     ),
                     if (_passwordError != null) ...[
@@ -238,19 +277,15 @@ class _LoginPageState extends State<LoginPage> {
                       foregroundColor: Colors.blue,
                       splashFactory: InkRipple.splashFactory,
                       padding: EdgeInsets.zero,
-                      minimumSize: Size(0, 0),
+                      minimumSize: const Size(0, 0),
                     ),
-                    onPressed: () {
-                      //print("Forgot Password clicked");
-                    },
+                    onPressed: () {},
                     child: const Text(
                       "Forgot Password?",
                       style: TextStyle(
                         fontFamily: 'Montserrat',
                         fontSize: 12,
-                        fontVariations: [
-                          FontVariation('wght', 400),
-                        ],
+                        fontVariations: [FontVariation('wght', 400)],
                         color: Colors.blue,
                       ),
                     ),
@@ -263,23 +298,7 @@ class _LoginPageState extends State<LoginPage> {
                   width: double.infinity,
                   height: 35,
                   child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        // Validate phone and password
-                        _phoneError = phoneController.text.isEmpty ? 'Phone number is required' : null;
-                        _passwordError = passwordController.text.isEmpty ? 'Password is required' : null;
-
-                        // If no errors, navigate to CategoryReportPage
-                        if (_phoneError == null && _passwordError == null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ReportPage(), // <-- Replace with your actual page
-                            ),
-                          );
-                        }
-                      });
-                    },
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF23552C),
                       foregroundColor: Colors.white,
@@ -294,7 +313,13 @@ class _LoginPageState extends State<LoginPage> {
                       elevation: 4,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
-                    child: const Text('Continue'),
+                    child: _isLoading
+                        ? const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                        : const Text('Continue'),
                   ),
                 ),
               ],
