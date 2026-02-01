@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 import 'package:nagabantay_mobile_app/pages/splash_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  print("BEFORE dotenv");
+  await dotenv.load(fileName: "assets/.env");
+  print("AFTER dotenv");
+
   runApp(const MyApp());
 }
 
@@ -12,10 +19,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // AppBar theme using local Montserrat font
     final appBarTheme = AppBarTheme(
       titleTextStyle: const TextStyle(
-        fontFamily: 'Montserrat', // local font family
+        fontFamily: 'Montserrat',
         fontWeight: FontWeight.w700,
         fontSize: 18,
         color: Colors.white,
