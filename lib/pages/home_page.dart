@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:nagabantay_mobile_app/pages/login_page.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:nagabantay_mobile_app/pages/hazardmap_page.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:nagabantay_mobile_app/services/flood_map_service.dart';
+import 'dart:ui' as ui;
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -103,7 +107,6 @@ class HomePage extends StatelessWidget {
       );
     }
 
-    // FILLED icons = Bold variants (v1.2.1 compatible)
     final tiles = [
       {
         'label': 'Submitted',
@@ -167,14 +170,10 @@ class HomePage extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                        Theme.of(context).colorScheme.primary,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 10,
-                        ),
-                        minimumSize: const Size(110, 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        fixedSize: ui.Size(110, 40),
                       ),
                       child: Text(
                         'SIGN UP',
@@ -194,7 +193,6 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-              // Title
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
                 child: Text(
@@ -213,7 +211,6 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-              // Grid (no green background)
               Padding(
                 padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -239,6 +236,55 @@ class HomePage extends StatelessWidget {
                   },
                 ),
               ),
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Map Overview',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 20,
+                        fontFamily: 'Montserrat',
+                        color: const Color(0xFF06370B),
+                        fontVariations: const [FontVariation('wght', 700)],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HazardMapPage(),
+                          ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: ui.Size(0, 0),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'View Map',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Montserrat',
+                          fontVariations: [
+                            FontVariation('wght', 500),
+                          ],
+                          color: Color(0xFF06370B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: MapOverviewCard(),
+              ),
             ],
           ),
         ),
@@ -246,3 +292,79 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
+class MapOverviewCard extends StatelessWidget {
+  const MapOverviewCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HazardMapPage(),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFF669062),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: IgnorePointer(
+            child: MapWidget(
+              cameraOptions: CameraOptions(
+                center: Point(coordinates: Position(123.2, 13.63)),
+                zoom: 12.0,
+                pitch: 0.0,
+              ),
+              styleUri: "mapbox://styles/mapbox/streets-v12",
+              onMapCreated: (mapboxMap) async {
+                await FloodMapService.instance.loadFloodDataOnce();
+
+                await mapboxMap.style.addSource(
+                  GeoJsonSource(
+                    id: "flood-source-preview",
+                    data: FloodMapService.instance.geoJsonString!,
+                  ),
+                );
+
+                await mapboxMap.style.addLayer(
+                  FillLayer(
+                    id: "flood-layer-preview",
+                    sourceId: "flood-source-preview",
+                    fillColorExpression: [
+                      "match",
+                      ["get", "Var"],
+                      1, "#FFFF00",
+                      2, "#FFA500",
+                      3, "#FF0000",
+                      "#000000",
+                    ],
+                    fillOpacity: 0.35,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
