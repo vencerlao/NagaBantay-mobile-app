@@ -1,9 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:nagabantay_mobile_app/pages/signup_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+
 import 'package:nagabantay_mobile_app/pages/splash_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  print("BEFORE dotenv");
+  await dotenv.load(fileName: "assets/.env");
+  print("AFTER dotenv");
+
+import 'package:nagabantay_mobile_app/auth_gate.dart';
+import 'package:nagabantay_mobile_app/pages/signup_page.dart';
+import 'package:nagabantay_mobile_app/pages/home_page.dart';
+
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('Firebase initialized');
+  } catch (e) {
+    debugPrint('Firebase initialization error: $e');
+  }
+
   runApp(const MyApp());
 }
 
@@ -12,10 +38,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // AppBar theme using local Montserrat font
     final appBarTheme = AppBarTheme(
       titleTextStyle: const TextStyle(
-        fontFamily: 'Montserrat', // local font family
+        fontFamily: 'Montserrat',
         fontWeight: FontWeight.w700,
         fontSize: 18,
         color: Colors.white,
@@ -25,6 +50,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Nagabantay',
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         primarySwatch: Colors.green,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
@@ -50,89 +76,16 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+
+      // 👇 Splash decides where to go next
       home: const SplashPage(),
-    );
-  }
-}
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Image.asset(
-                'assets/images/nagabantay_app_logo.png',
-                width: 120,
-                height: 120,
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Using local Montserrat via theme
-            Text(
-              'Welcome to Nagabantay',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'You have pushed the button this many times:',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SignUpPage()),
-                );
-              },
-              child: const Text(
-                'Go to Sign Up',
-                style: TextStyle(
-                  fontFamily: 'Montserrat', // ensure local font
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      // 👇 Centralized routing (prevents import errors later)
+      routes: {
+        '/auth': (context) => const AuthGate(),
+        '/signup': (context) => const SignUpPage(),
+        '/home': (context) => const HomePage(),
+      },
     );
   }
 }
