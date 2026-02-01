@@ -39,6 +39,12 @@ dependencies:
   maplibre_gl: ^0.25.0   # check for latest version
   geolocator: ^14.0.2
   geocoding: ^4.0.0
+  http: ^1.6.0
+  geojson_vi: ^2.2.5
+  webview_flutter: ^4.13.1
+  mapbox_maps_flutter: ^2.18.0
+  dropdown_button2: ^2.3.9
+  flutter_dotenv: ^6.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -73,6 +79,11 @@ flutter:
     - assets/images/nagabantay_logo.png
     - assets/images/logo-sign.png
     - assets/images/nagabantay_header.png
+    - assets/flood.geojson
+    - assets/naga_flood.geojson
+    - assets/naga_evacuation1.geojson
+    - assets/images/circle-duotone.png
+    - assets/.env
 
 
 
