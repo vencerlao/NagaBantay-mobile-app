@@ -13,9 +13,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # Read more about Android versioning at https://developer.android.com/studio/publish/versioning
 # In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
 # Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
+# the following page: https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 version: 1.0.0+1
 
 environment:
@@ -30,6 +28,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
 
   phosphor_flutter: ^1.2.1
   dropdown_search: ^5.0.6
@@ -62,6 +64,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -77,13 +80,14 @@ flutter:
   # Assets for logos used in the splash screen and app UI
   assets:
     - assets/images/nagabantay_logo.png
-    - assets/images/logo-sign.png
     - assets/images/nagabantay_header.png
     - assets/flood.geojson
     - assets/naga_flood.geojson
     - assets/naga_evacuation1.geojson
     - assets/images/circle-duotone.png
     - assets/.env
+    - assets/images/typhoon.png
+    - assets/images/earthquake.png
 
 
 
@@ -115,6 +119,9 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-
-
-
+flutter_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/nagabantay_logo.png"
+  android_adaptive_icon_background: "#ffffff"
+  android_adaptive_icon_foreground: "assets/images/nagabantay_logo.png"
