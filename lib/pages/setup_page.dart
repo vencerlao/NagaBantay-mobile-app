@@ -8,7 +8,7 @@ import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 import 'package:nagabantay_mobile_app/widgets/responsive_scaffold.dart';
 
 class SetupPage extends StatefulWidget {
-  final String phoneNumber; // from SignUp page (normalized digits)
+  final String phoneNumber;
   const SetupPage({super.key, required this.phoneNumber});
 
   @override
@@ -33,7 +33,6 @@ class _PasswordValidationRow extends StatelessWidget {
             fontFamily: 'Montserrat',
             fontSize: 14,
             color: Color(0xFF23552C),
-            fontVariations: [FontVariation('wght', 400)],
           ),
         ),
       ],
@@ -82,29 +81,19 @@ class _SetupPageState extends State<SetupPage> {
 
   Future<void> _saveUserData() async {
     setState(() {
-      _firstNameError =
-      _firstNameController.text.isEmpty ? 'First name is required' : null;
-      _lastNameError =
-      _lastNameController.text.isEmpty ? 'Last name is required' : null;
-      _passwordError =
-      _passwordController.text.isEmpty ? 'Password is required' : null;
-      _barangayError =
-      _selectedBarangay == null ? 'Please select a barangay' : null;
+      _firstNameError = _firstNameController.text.isEmpty ? 'First name is required' : null;
+      _lastNameError = _lastNameController.text.isEmpty ? 'Last name is required' : null;
+      _passwordError = _passwordController.text.isEmpty ? 'Password is required' : null;
+      _barangayError = _selectedBarangay == null ? 'Please select a barangay' : null;
     });
 
-    if (_firstNameError != null ||
-        _lastNameError != null ||
-        _passwordError != null ||
-        _barangayError != null) return;
+    if (_firstNameError != null || _lastNameError != null || _passwordError != null || _barangayError != null) return;
 
     setState(() => _isLoading = true);
 
     try {
       final normalized = _normalizePhone(_phoneController.text.trim());
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(normalized) // doc ID = normalized phone
-          .set({
+      await FirebaseFirestore.instance.collection('users').doc(normalized).set({
         'phone': normalized,
         'firstName': _firstNameController.text.trim(),
         'lastName': _lastNameController.text.trim(),
@@ -113,476 +102,261 @@ class _SetupPageState extends State<SetupPage> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // Show the success dialog instead of SnackBar
       showDialog(
         context: context,
-        barrierDismissible: false, // force user to tap Done
-        builder: (context) {
-          return Dialog(
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: Color(0xFF23552C),
-                    size: 64,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Account Created Successfully',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontSize: 18,
-                      color: Color(0xFF23552C),
-                      fontWeight: FontWeight.w700,
+        barrierDismissible: false,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Color(0xFF23552C), size: 64),
+                const SizedBox(height: 16),
+                const Text(
+                  'Account Created Successfully',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontFamily: 'Montserrat', fontSize: 18, color: Color(0xFF23552C), fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const SignUpPage()),
+                            (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF23552C),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    child: const Text('Done', style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w600)),
                   ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 40,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Close the dialog first
-                        Navigator.of(context).pop();
-
-                        // Navigate to SignUpPage and clear the navigation stack so
-                        // the app returns to the signup flow reliably.
-                        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const SignUpPage()),
-                          (route) => false,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF23552C),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text(
-                        'Done',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  )
-                ],
-              ),
+                )
+              ],
             ),
-          );
-        },
+          ),
+        ),
       );
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error saving data. Try again.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error saving data.')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return ResponsiveScaffold(
+      // FIX 1: Prevent Scaffold from shrinking background, avoiding white space flicker.
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            PhosphorIcons.caretLeft,
-            size: 22.0,
-            color: const Color(0xff06370b),
+          onPressed: () => Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const SignUpPage()),
           ),
+          icon: const Icon(PhosphorIcons.caretLeft, size: 22.0, color: Color(0xff06370b)),
         ),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final maxWidth = math.min(constraints.maxWidth, 720).toDouble();
+
+          // FIX 2: Manually handle the keyboard padding inside the LayoutBuilder.
+          final keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
+
           return Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxWidth),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 18),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-
-                      const Text(
-                        'Complete your\naccount setup',
-                        style: TextStyle(
-                          fontFamily: 'Montserrat',
-                          fontSize: 24,
-                          color: Color(0xFF23552C),
-                          fontVariations: [FontVariation('wght', 700)],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Phone Number
-                      const Text('Phone Number',
+              child: Padding(
+                padding: EdgeInsets.only(bottom: keyboardPadding),
+                child: SingleChildScrollView(
+                  // physics: const ClampingScrollPhysics() prevents "bounce" gaps.
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 18),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Complete your\naccount setup',
                           style: TextStyle(
                             fontFamily: 'Montserrat',
-                            fontSize: 14,
+                            fontSize: 24,
                             color: Color(0xFF23552C),
-                            fontVariations: [FontVariation('wght', 400)],
-                          )),
-                      const SizedBox(height: 10),
-
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFB0CEAC),
-                              border: Border.all(color: const Color(0xFF23552C)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              '+63',
-                              style: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontSize: 14,
-                                  fontVariations: [FontVariation('wght', 400)],
-                                  color: Color(0xFF23552C)),
-                            ),
+                            fontWeight: FontWeight.w700,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: SizedBox(
-                              height: 42,
-                              child: TextFormField(
-                                controller: _phoneController,
-                                keyboardType: TextInputType.phone,
-                                style: const TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 14,
-                                    color: Color(0xFF23552C),
-                                    fontVariations: [FontVariation('wght', 400)]),
-                                decoration: InputDecoration(
-                                  hintText: '9xx xxx xxxx',
-                                  hintStyle: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 14,
-                                    fontVariations: const [FontVariation('wght', 400)],
-                                    color: const Color(0xFF23552C).withAlpha(128),
-                                  ),
-                                  filled: true,
-                                  fillColor: const Color(0xFFB0CEAC),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Color(0xFF23552C)),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Color(0xFF23552C), width: 2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Phone Number
+                        _buildLabel('Phone Number'),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFB0CEAC),
+                                border: Border.all(color: const Color(0xFF23552C)),
+                                borderRadius: BorderRadius.circular(8),
                               ),
+                              child: const Text('+63', style: TextStyle(fontFamily: 'Montserrat', color: Color(0xFF23552C))),
                             ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // First Name
-                      const Text('First Name', style: TextStyle(
-                        fontFamily: 'Montserrat', fontSize: 14, color: Color(0xFF23552C),
-                        fontVariations: [FontVariation('wght', 400)],
-                      )),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 42,
-                        child: TextFormField(
-                          controller: _firstNameController,
-                          style: const TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 14,
-                            color: Color(0xFF23552C),
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Enter your first name',
-                            hintStyle: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 14,
-                              color: const Color(0xFF23552C).withAlpha(128),
-                              fontVariations: const [FontVariation('wght', 400)],
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFB0CEAC),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide:
-                              const BorderSide(color: Color(0xFF23552C)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(
-                                  color: Color(0xFF23552C), width: 2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
-                          ),
-                        ),
-                      ),
-
-                      if (_firstNameError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4, left: 4),
-                          child: Text(
-                            _firstNameError!,
-                            style: const TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 12,
-                              color: Colors.red,
-                              fontVariations: [FontVariation('wght', 400)],
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      // Last Name
-                      const Text('Last Name', style: TextStyle(
-                        fontFamily: 'Montserrat', fontSize: 14, color: Color(0xFF23552C),
-                        fontVariations: [FontVariation('wght', 400)],
-                      )),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 42,
-                        child: TextFormField(
-                          controller: _lastNameController,
-                          style: const TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 14,
-                            color: Color(0xFF23552C),
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Enter your last name',
-                            hintStyle: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 14,
-                              color: const Color(0xFF23552C).withAlpha(128),
-                              fontVariations: const [FontVariation('wght', 400)],
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFB0CEAC),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide:
-                              const BorderSide(color: Color(0xFF23552C)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(
-                                  color: Color(0xFF23552C), width: 2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
-                          ),
-                        ),
-                      ),
-
-                      if (_lastNameError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4, left: 4),
-                          child: Text(
-                            _lastNameError!,
-                            style: const TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 12,
-                              color: Colors.red,
-                              fontVariations: [FontVariation('wght', 400)],
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      // Password
-                      const Text('Password', style: TextStyle(
-                        fontFamily: 'Montserrat', fontSize: 14, color: Color(0xFF23552C),
-                        fontVariations: [FontVariation('wght', 400)],
-                      )),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 42,
-                        child: TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          onChanged: (_) => setState(() {}),
-                          style: const TextStyle(
-                            fontFamily: 'Montserrat',
-                            fontSize: 14,
-                            color: Color(0xFF23552C),
-                            fontVariations: [FontVariation('wght', 400)],
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Enter your password',
-                            hintStyle: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 14,
-                              color: const Color(0xFF23552C).withAlpha(128),
-                              fontVariations: const [FontVariation('wght', 400)],
-                            ),
-                            filled: true,
-                            fillColor: const Color(0xFFB0CEAC),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide:
-                              const BorderSide(color: Color(0xFF23552C)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(
-                                  color: Color(0xFF23552C), width: 2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: const Color(0xFF23552C)),
-                              onPressed: () => setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              }),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      if (_passwordError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4, left: 4),
-                          child: Text(
-                            _passwordError!,
-                            style: const TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 12,
-                              color: Colors.red,
-                              fontVariations: [FontVariation('wght', 400)],
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(height: 8),
-                      _PasswordValidationRow(
-                          isValid: hasMinLength, text: 'At least 8 characters'),
-                      const SizedBox(height: 4),
-                      _PasswordValidationRow(isValid: hasNumber, text: 'Contains a number'),
-
-                      // Barangay
-                      const SizedBox(height: 16),
-                      const Text('Barangay', style: TextStyle(
-                        fontFamily: 'Montserrat', fontSize: 14, color: Color(0xFF23552C),
-                        fontVariations: [FontVariation('wght', 400)],
-                      )),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 42,
-                        child: DropdownSearch<String>(
-                          items: const [
-                            'Abella','Bagumbayan Norte','Bagumbayan Sur','Balatas','Calauag',
-                            'Cararayan','Carolina','Conception Grande','Conception Pequeña',
-                            'Dayangdang','Del Rosario','Dinaga','Igualdad Interior','Lerma',
-                            'Liboton','Mabolo','Pacol','Panicuason','Peñafrancia','Sabang',
-                            'San Felipe','San Francisco','San Isidro','Santa Cruz','Tabuco',
-                            'Tinago','Triangulo'
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildTextField(_phoneController, hint: '9xx xxx xxxx', isPhone: true)),
                           ],
-                          selectedItem: _selectedBarangay,
-                          onChanged: (value) => setState(() => _selectedBarangay = value),
-                          dropdownButtonProps: const DropdownButtonProps(
-                              icon: Icon(PhosphorIcons.caretDownFill,
-                                  size: 16.0, color: Color(0xff06370b))),
-                          dropdownBuilder: (context, selectedItem) {
-                            return Text(
+                        ),
+
+                        const SizedBox(height: 16),
+                        _buildLabel('First Name'),
+                        _buildTextField(_firstNameController, hint: 'Enter your first name'),
+                        if (_firstNameError != null) _buildErrorText(_firstNameError!),
+
+                        const SizedBox(height: 16),
+                        _buildLabel('Last Name'),
+                        _buildTextField(_lastNameController, hint: 'Enter your last name'),
+                        if (_lastNameError != null) _buildErrorText(_lastNameError!),
+
+                        const SizedBox(height: 16),
+                        _buildLabel('Password'),
+                        _buildTextField(
+                          _passwordController,
+                          hint: 'Enter your password',
+                          isPassword: true,
+                          obscure: _obscurePassword,
+                          onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        if (_passwordError != null) _buildErrorText(_passwordError!),
+
+                        const SizedBox(height: 8),
+                        _PasswordValidationRow(isValid: hasMinLength, text: 'At least 8 characters'),
+                        const SizedBox(height: 4),
+                        _PasswordValidationRow(isValid: hasNumber, text: 'Contains a number'),
+
+                        const SizedBox(height: 16),
+                        _buildLabel('Barangay'),
+                        SizedBox(
+                          height: 42,
+                          child: DropdownSearch<String>(
+                            items: const [
+                              'Abella','Bagumbayan Norte','Bagumbayan Sur','Balatas','Calauag',
+                              'Cararayan','Carolina','Conception Grande','Conception Pequeña',
+                              'Dayangdang','Del Rosario','Dinaga','Igualdad Interior','Lerma',
+                              'Liboton','Mabolo','Pacol','Panicuason','Peñafrancia','Sabang',
+                              'San Felipe','San Francisco','San Isidro','Santa Cruz','Tabuco',
+                              'Tinago','Triangulo'
+                            ],
+                            selectedItem: _selectedBarangay,
+                            onChanged: (value) => setState(() => _selectedBarangay = value),
+                            dropdownButtonProps: const DropdownButtonProps(
+                                icon: Icon(PhosphorIcons.caretDownFill, size: 16.0, color: Color(0xff06370b))),
+                            dropdownBuilder: (context, selectedItem) => Text(
                               selectedItem ?? 'Select your barangay',
                               style: TextStyle(
                                 fontFamily: 'Montserrat',
                                 fontSize: 14,
-                                fontVariations: const [FontVariation('wght', 400)],
-                                color: selectedItem == null
-                                    ? const Color(0xFF23552C).withAlpha(128)
-                                    : const Color(0xFF23552C),
+                                color: selectedItem == null ? const Color(0xFF23552C).withAlpha(128) : const Color(0xFF23552C),
                               ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      if (_barangayError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4, left: 4),
-                          child: Text(
-                            _barangayError!,
-                            style: const TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 12,
-                              color: Colors.red,
-                              fontVariations: [FontVariation('wght', 400)],
                             ),
                           ),
                         ),
+                        if (_barangayError != null) _buildErrorText(_barangayError!),
 
-                      const SizedBox(height: 40),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 35,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _saveUserData,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF23552C),
-                            foregroundColor: Colors.white,
-                            textStyle: const TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                        const SizedBox(height: 40),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 45,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _saveUserData,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF23552C),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 4,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 4,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: _isLoading
+                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Text('Confirm', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold)),
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 16,
-                                  width: 16,
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white, strokeWidth: 2),
-                                )
-                              : const Text('Confirm'),
                         ),
-                      ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-                      const SizedBox(height: 24),
-                    ],
-                  ), // Column
-                ), // Form
-              ), // SingleChildScrollView
-            ), // ConstrainedBox
-          ); // Center
-        }, // builder
-      ), // LayoutBuilder
-    ); // ResponsiveScaffold
-  } // build
-} // class
+  // --- Helper Widgets to keep the build method clean ---
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(text, style: const TextStyle(fontFamily: 'Montserrat', fontSize: 14, color: Color(0xFF23552C))),
+    );
+  }
+
+  Widget _buildTextField(
+      TextEditingController controller, {
+        required String hint,
+        bool isPhone = false,
+        bool isPassword = false,
+        bool obscure = false,
+        VoidCallback? onToggleVisibility,
+        Function(String)? onChanged,
+      }) {
+    return SizedBox(
+      height: 42,
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscure,
+        keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+        onChanged: onChanged,
+        style: const TextStyle(fontFamily: 'Montserrat', fontSize: 14, color: Color(0xFF23552C)),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(fontFamily: 'Montserrat', fontSize: 14, color: const Color(0xFF23552C).withAlpha(128)),
+          filled: true,
+          fillColor: const Color(0xFFB0CEAC),
+          enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xFF23552C)), borderRadius: BorderRadius.circular(8)),
+          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xFF23552C), width: 2), borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          suffixIcon: isPassword
+              ? IconButton(
+            icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF23552C), size: 18),
+            onPressed: onToggleVisibility,
+          )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorText(String error) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, left: 4),
+      child: Text(error, style: const TextStyle(fontFamily: 'Montserrat', fontSize: 12, color: Colors.red)),
+    );
+  }
+}

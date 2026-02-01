@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -90,7 +91,9 @@ class _LoginPageState extends State<LoginPage> {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const SignUpPage()),
+          ),
           icon: Icon(
             PhosphorIcons.caretLeft,
             size: 22.0,
