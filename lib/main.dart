@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
-import 'package:nagabantay_mobile_app/pages/splash_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
+
+import 'firebase_options.dart';
+import 'auth_gate.dart';
+import 'pages/splash_page.dart';
+import 'pages/signup_page.dart';
+import 'pages/home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  print("BEFORE dotenv");
-  await dotenv.load(fileName: "assets/.env");
-  print("AFTER dotenv");
-
-import 'package:nagabantay_mobile_app/auth_gate.dart';
-import 'package:nagabantay_mobile_app/pages/signup_page.dart';
-import 'package:nagabantay_mobile_app/pages/home_page.dart';
-
-import 'firebase_options.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // Load environment variables if available (ignore if missing)
+  try {
+    await dotenv.load(fileName: 'assets/.env');
+  } catch (_) {
+    // ignore missing .env in development
+  }
 
   try {
     await Firebase.initializeApp(
@@ -50,7 +47,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Nagabantay',
       debugShowCheckedModeBanner: false,
-
       theme: ThemeData(
         primarySwatch: Colors.green,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
@@ -76,11 +72,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-
-      // 👇 Splash decides where to go next
+      // Splash decides where to go next
       home: const SplashPage(),
-
-      // 👇 Centralized routing (prevents import errors later)
       routes: {
         '/auth': (context) => const AuthGate(),
         '/signup': (context) => const SignUpPage(),
