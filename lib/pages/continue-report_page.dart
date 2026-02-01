@@ -73,9 +73,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                 ),
               ),
               onPressed: () {
-                // Replace the entire stack with the NavBar, opening on Home.
-                // This guarantees the BottomNavigationBar is visible and we
-                // avoid rebuilding multiple home pages on the stack.
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const NagabantayNavBar(initialIndex: 0)),
                   (route) => false,
@@ -101,7 +98,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation(); // fetch device location when page loads
+    _getCurrentLocation();
   }
 
   @override
@@ -110,12 +107,10 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
     super.dispose();
   }
 
-  // ===== Get device location =====
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Check if location service is enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       setState(() {
@@ -124,7 +119,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
       return;
     }
 
-    // Check permissions
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -142,20 +136,16 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
       return;
     }
 
-    // ✅ Get current position
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
 
-    // ✅ Update selected location
     setState(() {
       _selectedLocation = LatLng(position.latitude, position.longitude);
     });
 
-    // ✅ Get address
     _getAddressFromLatLng(_selectedLocation!);
   }
 
-  // ===== Reverse geocode to get address =====
   Future<void> _getAddressFromLatLng(LatLng location) async {
     try {
       List<Placemark> placemarks =
@@ -205,7 +195,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ===== Choose Location =====
               const Text(
                 'Choose location',
                 style: TextStyle(
@@ -227,7 +216,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                       width: double.infinity,
                       child: FlutterMap(
                         options: MapOptions(
-                          center: _selectedLocation!, // non-null because of loading check
+                          center: _selectedLocation!,
                           zoom: 16,
                           minZoom: 10,
                           maxZoom: 18,
@@ -248,7 +237,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                           MarkerLayer(
                             markers: [
                               Marker(
-                                point: _selectedLocation!, // non-null assertion
+                                point: _selectedLocation!,
                                 width: 40,
                                 height: 40,
                                 child: const Icon(
@@ -264,12 +253,11 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
                     ),
 
-                    // Change Pin Button
                     Positioned(
                       bottom: 12,
                       right: 12,
                       child: ElevatedButton.icon(
-                        onPressed: () async { // <- make this async
+                        onPressed: () async {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const ChangePinPage()),
@@ -281,7 +269,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                               _address = result['address'] as String;
                             });
 
-                            // Move map to new location
                             _mapController.move(_selectedLocation!, 16);
                           }
                         },
