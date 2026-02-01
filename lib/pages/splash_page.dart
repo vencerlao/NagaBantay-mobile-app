@@ -11,6 +11,8 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  Timer? _timer;
+
   @override
   void initState() {
     super.initState();
@@ -18,13 +20,19 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   void _startDelay() {
-    Timer(const Duration(milliseconds: 1800), () {
+    _timer = Timer(const Duration(milliseconds: 1800), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const SignUpPage()),
         );
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override

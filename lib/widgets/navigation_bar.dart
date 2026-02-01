@@ -18,10 +18,10 @@ class _NagabantayNavBarState extends State<NagabantayNavBar> {
   late int _currentIndex;
 
   final List<Widget> _pages = [
-    HomePage(),
-    ReportPage(),
-    AlertsPage(),
-    AccountPage(),
+    const HomePage(),
+    const ReportPage(),
+    const AlertsPage(),
+    const AccountPage(),
   ];
 
   @override
@@ -32,28 +32,46 @@ class _NagabantayNavBarState extends State<NagabantayNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_currentIndex],
+    // Theme colors for consistency
+    const Color navBgColor = Color(0xFFDBF5D7);
+    const Color activeColor = Color(0xFF255E1F);
+    const Color inactiveColor = Color(0xFF737373);
 
-      bottomNavigationBar: SizedBox(
-        height: 80,
+    return Scaffold(
+      // The body is wrapped in an IndexedStack to preserve the scroll
+      // position of pages when switching tabs.
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
+
+      // Theme wrapper ensures the background color extends to the bottom of the screen
+      // even on devices with home indicators (iPhone 13/14/15, etc.)
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(
+          canvasColor: navBgColor,
+        ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFFDBF5D7),
-          selectedItemColor: const Color(0xFF255E1F),
-          unselectedItemColor: const Color(0xFF737373),
-          iconSize: 22,
+          backgroundColor: navBgColor,
+          selectedItemColor: activeColor,
+          unselectedItemColor: inactiveColor,
+          iconSize: 24, // Slightly larger for better touch targets
+
+          // These properties ensure the bar looks good on all screen sizes
+          elevation: 8,
+          landscapeLayout: BottomNavigationBarLandscapeLayout.spread,
 
           selectedLabelStyle: const TextStyle(
             fontFamily: 'Montserrat',
-            fontSize: 14,
-            fontVariations: [FontVariation('wght', 700)],
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
           ),
           unselectedLabelStyle: const TextStyle(
             fontFamily: 'Montserrat',
-            fontSize: 12,
-            fontVariations: [FontVariation('wght', 700)],
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
 
           onTap: (index) {
@@ -64,31 +82,19 @@ class _NagabantayNavBarState extends State<NagabantayNavBar> {
 
           items: const [
             BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(top: 6),
-                child: Icon(PhosphorIcons.houseFill),
-              ),
+              icon: Icon(PhosphorIcons.houseFill),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(top: 6),
-                child: Icon(PhosphorIcons.pencilSimpleLineFill),
-              ),
+              icon: Icon(PhosphorIcons.pencilSimpleLineFill),
               label: 'Report',
             ),
             BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(top: 6),
-                child: Icon(PhosphorIcons.warningFill),
-              ),
+              icon: Icon(PhosphorIcons.warningFill),
               label: 'Alerts',
             ),
             BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(top: 6),
-                child: Icon(PhosphorIcons.userFill),
-              ),
+              icon: Icon(PhosphorIcons.userFill),
               label: 'Account',
             ),
           ],
