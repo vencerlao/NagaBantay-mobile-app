@@ -15,6 +15,20 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+
+    // Register the Google Services plugin so it can be applied in module build files
+    plugins {
+        id("com.google.gms.google-services") version "4.3.15" apply false
+    }
+}
+
+// Ensure all projects use Google/MavenCentral repositories for dependency resolution
+dependencyResolutionManagement {
+    // removed repositoriesMode reference because it caused a Kotlin script unresolved reference in some environments
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
 
 plugins {
