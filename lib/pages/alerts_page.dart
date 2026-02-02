@@ -12,9 +12,6 @@ class AlertsPage extends StatefulWidget {
 class _AlertsPageState extends State<AlertsPage> {
   late int _selectedIndex;
 
-  // ===============================
-  // DESIGN TOKENS
-  // ===============================
   static const Color headerTextColor = Color(0xFF0F4A17);
 
   static const Color selectedBgColor = Color(0xFF0F4A17);
@@ -121,9 +118,6 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  // ===============================
-  // INFORMATION TAB
-  // ===============================
   Widget _buildInformationContent() {
     return SingleChildScrollView(
       child: Column(
@@ -211,9 +205,6 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  // ===============================
-  // SAFETY GUIDES TAB (PATTERN A)
-  // ===============================
   Widget _buildSafetyGuidesContent() {
     return SingleChildScrollView(
       child: Column(

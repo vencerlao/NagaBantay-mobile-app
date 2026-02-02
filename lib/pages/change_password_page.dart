@@ -229,7 +229,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
                 const SizedBox(height: 16),
 
-                /// New Password
                 const Text('New Password',
                     style: TextStyle(
                         color: Color(0xFF06370b),
@@ -261,7 +260,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
                 const SizedBox(height: 16),
 
-                /// Confirm Password
                 const Text('Confirm Password',
                     style: TextStyle(
                         color: Color(0xFF06370b),

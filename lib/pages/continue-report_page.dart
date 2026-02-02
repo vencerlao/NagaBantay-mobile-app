@@ -7,9 +7,19 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:nagabantay_mobile_app/pages/changepin_page.dart';
 import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
+import '../services/tflite_service.dart';
+import '../models/report_draft.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
+File? _pickedImage;
+
+final ImagePicker _picker = ImagePicker();
 
 class ReportContinuePage extends StatefulWidget {
-  const ReportContinuePage({super.key});
+  final ReportDraft draft;
+  const ReportContinuePage({super.key, required this.draft});
 
   @override
   State<ReportContinuePage> createState() => _ReportContinuePageState();
@@ -20,13 +30,13 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   final TextEditingController _descriptionController = TextEditingController();
   final MapController _mapController = MapController();
 
-  LatLng? _selectedLocation; // default location
+  LatLng? _selectedLocation;
   String _address = 'Fetching address...';
 
   void _showSuccessDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // user must tap button
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -98,6 +108,9 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   @override
   void initState() {
     super.initState();
+
+    _descriptionController.text = widget.draft.description ?? '';
+
     _getCurrentLocation();
   }
 
@@ -145,6 +158,22 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
     _getAddressFromLatLng(_selectedLocation!);
   }
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _pickedImage = File(pickedFile.path);
+      });
+    }
+  }
+
 
   Future<void> _getAddressFromLatLng(LatLng location) async {
     try {
@@ -210,7 +239,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                 borderRadius: BorderRadius.circular(12),
                 child: Stack(
                   children: [
-                    // Map
                     SizedBox(
                       height: 220,
                       width: double.infinity,
@@ -264,12 +292,15 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                           );
 
                           if (result != null) {
-                            setState(() {
-                              _selectedLocation = result['location'] as LatLng;
-                              _address = result['address'] as String;
-                            });
-
-                            _mapController.move(_selectedLocation!, 16);
+                            final loc = result['location'] as LatLng?;
+                            final addr = result['address'] as String?;
+                            if (loc != null && addr != null) {
+                              setState(() {
+                                _selectedLocation = loc;
+                                _address = addr;
+                              });
+                              _mapController.move(_selectedLocation!, 16);
+                            }
                           }
                         },
 
@@ -295,7 +326,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
               const SizedBox(height: 8),
 
-              // Location Address (dynamic)
               Row(
                 children: [
                   const Icon(
@@ -320,7 +350,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
               const SizedBox(height: 28),
 
-              // ===== Description =====
               const Text(
                 'Tell us what happened',
                 style: TextStyle(
@@ -335,6 +364,9 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 5,
+                onChanged: (value) {
+                  widget.draft.description = value;
+                },
                 decoration: InputDecoration(
                   hintText: 'Describe the incident in detail...',
                   hintStyle: const TextStyle(
@@ -389,7 +421,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
               const SizedBox(height: 24),
 
-              // ===== Attach Media =====
               const Text(
                 'Attach photos or videos (optional)',
                 style: TextStyle(
@@ -408,11 +439,20 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                 borderType: BorderType.RRect,
                 radius: const Radius.circular(8),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () async {
+                    await _pickImage();
+                  },
+
                   child: SizedBox(
                     width: double.infinity,
                     height: 120,
-                    child: Column(
+                    child: _pickedImage != null
+                        ? Image.file(
+                      _pickedImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    )
+                        : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
@@ -438,16 +478,88 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
               const SizedBox(height: 32),
 
-              // ===== Continue Button =====
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (!_formKey.currentState!.validate()) return;
+                    onPressed: () async {
+                      final description = _descriptionController.text.trim();
+                      final loc = _selectedLocation;
 
-                    _showSuccessDialog();
-                  },
-                  style: ElevatedButton.styleFrom(
+                      if (description.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please provide a description')),
+                        );
+                        return;
+                      }
+
+                      if (loc == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Location not selected')),
+                        );
+                        return;
+                      }
+
+                      widget.draft
+                        ..description = description
+                        ..latitude = loc.latitude
+                        ..longitude = loc.longitude;
+
+                      try {
+                        final querySnapshot = await FirebaseFirestore.instance.collection('reports').get();
+                        int maxNumber = 0;
+
+                        for (var doc in querySnapshot.docs) {
+                          final number = int.tryParse(doc.id.replaceAll(RegExp(r'[^0-9]'), ''));
+                          if (number != null && number > maxNumber) maxNumber = number;
+                        }
+
+                        final nextNumber = maxNumber + 1;
+                        final nextId = 'R${nextNumber.toString().padLeft(3, '0')}';
+
+                        final docRef = FirebaseFirestore.instance.collection('reports').doc(nextId);
+                        await docRef.set({
+                          'report_id': nextId,
+                          'issue': widget.draft.issue ?? 'Unknown',
+                          'description': description,
+                          'latitude': loc.latitude,
+                          'longitude': loc.longitude,
+                          'my_naga_status': 'Pending',
+                          'timestamp': FieldValue.serverTimestamp(),
+                        });
+
+                        _showSuccessDialog();
+
+                        try {
+                          final tfliteService = TFLiteService();
+                          await tfliteService.loadModel();
+                          final modelOutput = await tfliteService.predict(description);
+
+                          final severityLabel = modelOutput['severity'] ?? 'Unknown';
+                          final severityConfidence = modelOutput['severity_confidence'] ?? 0.0;
+                          final officeLabel = modelOutput['office'] ?? 'Unknown';
+                          final officeConfidence = modelOutput['office_confidence'] ?? 0.0;
+
+                          await docRef.update({
+                            'predicted_severity': severityLabel,
+                            'severity_confidence': severityConfidence,
+                            'office': officeLabel,
+                            'office_confidence': officeConfidence,
+                          });
+
+                          print('AI labels saved successfully');
+                        } catch (e, s) {
+                          print('TFLite prediction failed: $e');
+                          print(s);
+                        }
+
+                      } catch (e) {
+                        print('Firestore write failed: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to submit report: $e')),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF23552C),
                     foregroundColor: Colors.white,
                     textStyle: const TextStyle(

@@ -7,25 +7,27 @@ import 'auth_gate.dart';
 import 'pages/splash_page.dart';
 import 'pages/signup_page.dart';
 import 'pages/home_page.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables if available (ignore if missing)
   try {
     await dotenv.load(fileName: 'assets/.env');
-  } catch (_) {
-    // ignore missing .env in development
+  } catch (_) {}
+
+  final mapboxToken = dotenv.env['MAPBOX_API_KEY'];
+  if (mapboxToken != null && mapboxToken.isNotEmpty) {
+    MapboxOptions.setAccessToken(mapboxToken);
+    debugPrint('Mapbox token initialized');
+  } else {
+    debugPrint('⚠️ Mapbox token NOT found');
   }
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    debugPrint('Firebase initialized');
-  } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-  }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(const MyApp());
 }
@@ -72,7 +74,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      // Splash decides where to go next
+
       home: const SplashPage(),
       routes: {
         '/auth': (context) => const AuthGate(),
