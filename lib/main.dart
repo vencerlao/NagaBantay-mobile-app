@@ -79,7 +79,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/auth': (context) => const AuthGate(),
         '/signup': (context) => const SignUpPage(),
-        '/home': (context) => const HomePage(),
+        '/home': (context) => HomePage(phoneNumber: 'default-number'),
       },
     );
   }
