@@ -389,7 +389,7 @@ class _HazardMapPageState extends State<HazardMapPage> {
                   fontSize: 16,
                   fontVariations: [FontVariation('wght', 500)],
                   color: Colors.white)),
-          duration: const Duration(seconds: 60),
+          duration: const Duration(seconds: 5),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
