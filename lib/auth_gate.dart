@@ -19,11 +19,9 @@ class AuthGate extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          // If FirebaseAuth is used this will show the app's main UI
           return const NagabantayNavBar(initialIndex: 0);
         }
 
-        // Default for apps that use custom auth (Firestore-backed): show signup page
         return const SignUpPage();
       },
     );

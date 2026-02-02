@@ -80,8 +80,8 @@ class _EditProfilePageState extends State<EditInformationPage> {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pop(context); // close dialog
-                      Navigator.pop(context); // go back
+                      Navigator.pop(context);
+                      Navigator.pop(context);
                     },
                     child: const Text(
                       'Done',
@@ -153,7 +153,6 @@ class _EditProfilePageState extends State<EditInformationPage> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      // Use SingleChildScrollView to prevent overflow when keyboard is up
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -250,13 +249,12 @@ class _EditProfilePageState extends State<EditInformationPage> {
                     });
                   },
                 ),
-                const SizedBox(height: 20), // Bottom spacing for the scroll view
+                const SizedBox(height: 20),
               ],
             ),
           ),
         ),
       ),
-      // Pinning the button to the bottom of the screen
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
         child: SizedBox(

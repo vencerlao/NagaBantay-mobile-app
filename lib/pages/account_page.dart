@@ -10,7 +10,6 @@ import 'package:nagabantay_mobile_app/pages/splash_page.dart';
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
 
-  // ================= Logout Confirmation Dialog =================
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -59,7 +58,6 @@ class AccountPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // ===== Logout Button =====
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -70,15 +68,13 @@ class AccountPage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () async {
-                      Navigator.pop(context); // close dialog
+                      Navigator.pop(context);
 
                       try {
                         await FirebaseAuth.instance.signOut();
                       } catch (_) {
-                        // ignore signOut errors - still navigate to splash
                       }
 
-                      // Navigate to splash page and clear navigation stack
                       Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                         MaterialPageRoute(
                           builder: (_) => const SplashPage(),
@@ -101,7 +97,6 @@ class AccountPage extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // ===== Cancel Button =====
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
@@ -133,14 +128,12 @@ class AccountPage extends StatelessWidget {
     );
   }
 
-  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // ===== Header =====
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(25, 100, 25, 40),
@@ -212,7 +205,6 @@ class AccountPage extends StatelessWidget {
             ),
           ),
 
-          // ===== Menu Items =====
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
@@ -286,7 +278,6 @@ class AccountPage extends StatelessWidget {
     );
   }
 
-  // ================= Tile Builder =================
   Widget _buildTile(
       BuildContext context, {
         required IconData icon,
