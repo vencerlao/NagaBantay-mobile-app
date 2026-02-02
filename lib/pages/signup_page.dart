@@ -18,7 +18,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _phoneController = TextEditingController();
 
   String? _phoneError;
-  bool _isLoading = false; // Loading state for button
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,7 +27,6 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   String _normalizePhone(String input) {
-    // remove non-digit characters
     final digitsOnly = input.replaceAll(RegExp(r'[^0-9]'), '');
     return digitsOnly;
   }
@@ -41,7 +40,6 @@ class _SignUpPageState extends State<SignUpPage> {
           .get();
       return doc.exists;
     } catch (e) {
-      // Optional: handle error
       return false;
     }
   }
@@ -70,7 +68,6 @@ class _SignUpPageState extends State<SignUpPage> {
     final normalized = _normalizePhone(phoneNumber);
 
     if (exists) {
-      // Existing user -> go to Login page, pass normalized phone
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -78,7 +75,6 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       );
     } else {
-      // New user -> go to Setup page
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -90,7 +86,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Use ResponsiveScaffold to avoid bottom overflow across devices
     return ResponsiveScaffold(
       resizeToAvoidBottomInset: false,
       body: LayoutBuilder(
@@ -107,7 +102,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 8),
-                      // Logo + Title
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Row(
@@ -196,7 +190,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
                       const SizedBox(height: 12),
 
-                      // Phone input row
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

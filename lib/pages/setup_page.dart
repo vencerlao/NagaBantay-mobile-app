@@ -156,7 +156,6 @@ class _SetupPageState extends State<SetupPage> {
   @override
   Widget build(BuildContext context) {
     return ResponsiveScaffold(
-      // FIX 1: Prevent Scaffold from shrinking background, avoiding white space flicker.
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -174,7 +173,6 @@ class _SetupPageState extends State<SetupPage> {
         builder: (context, constraints) {
           final maxWidth = math.min(constraints.maxWidth, 720).toDouble();
 
-          // FIX 2: Manually handle the keyboard padding inside the LayoutBuilder.
           final keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
 
           return Center(
@@ -183,7 +181,6 @@ class _SetupPageState extends State<SetupPage> {
               child: Padding(
                 padding: EdgeInsets.only(bottom: keyboardPadding),
                 child: SingleChildScrollView(
-                  // physics: const ClampingScrollPhysics() prevents "bounce" gaps.
                   physics: const ClampingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 18),
                   child: Form(
@@ -203,7 +200,6 @@ class _SetupPageState extends State<SetupPage> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Phone Number
                         _buildLabel('Phone Number'),
                         const SizedBox(height: 10),
                         Row(
@@ -307,8 +303,6 @@ class _SetupPageState extends State<SetupPage> {
       ),
     );
   }
-
-  // --- Helper Widgets to keep the build method clean ---
 
   Widget _buildLabel(String text) {
     return Padding(

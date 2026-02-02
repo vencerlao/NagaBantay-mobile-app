@@ -6,7 +6,7 @@ import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 
 
 class LoginPage extends StatefulWidget {
-  final String? initialPhone; // optional, for prefilled phone
+  final String? initialPhone;
   const LoginPage({super.key, this.initialPhone});
 
   @override
@@ -41,7 +41,6 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Normalize phone to digits-only to match how we saved it in setup
       final normalizedPhone = phoneController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
       final doc = await FirebaseFirestore.instance
           .collection('users')
@@ -65,9 +64,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      // Login successful -> navigate to report page
       setState(() => _isLoading = false);
-      // Replace navigation stack with app's main NavBar (home)
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const NagabantayNavBar(initialIndex: 0)),
         (route) => false,
@@ -75,7 +72,6 @@ class _LoginPageState extends State<LoginPage> {
 
     } catch (e) {
       setState(() => _isLoading = false);
-      // optional: handle firestore error
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error logging in. Please try again.')),
       );
