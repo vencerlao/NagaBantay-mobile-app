@@ -19,7 +19,11 @@ class AuthGate extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          return const NagabantayNavBar(initialIndex: 0);
+          final phoneNumber = snapshot.data?.phoneNumber ?? 'Unknown';
+          return NagabantayNavBar(
+            initialIndex: 0,
+            phoneNumber: phoneNumber,
+          );
         }
 
         return const SignUpPage();

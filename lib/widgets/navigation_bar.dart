@@ -8,7 +8,13 @@ import '../pages/account_page.dart';
 
 class NagabantayNavBar extends StatefulWidget {
   final int initialIndex;
-  const NagabantayNavBar({super.key, this.initialIndex = 0});
+  final String phoneNumber;
+
+  const NagabantayNavBar({
+    super.key,
+    this.initialIndex = 0,
+    required this.phoneNumber,
+  });
 
   @override
   State<NagabantayNavBar> createState() => _NagabantayNavBarState();
@@ -16,37 +22,33 @@ class NagabantayNavBar extends StatefulWidget {
 
 class _NagabantayNavBarState extends State<NagabantayNavBar> {
   late int _currentIndex;
-
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ReportPage(),
-    const AlertsPage(),
-    const AccountPage(),
-  ];
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, _pages.length - 1);
+    _currentIndex = widget.initialIndex.clamp(0, 3);
+
+    // Initialize pages here so we can use widget.phoneNumber
+    _pages = [
+      HomePage(phoneNumber: widget.phoneNumber),
+      ReportPage(phoneNumber: widget.phoneNumber),
+      const AlertsPage(),
+      const AccountPage(),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    // Theme colors for consistency
     const Color navBgColor = Color(0xFFDBF5D7);
     const Color activeColor = Color(0xFF255E1F);
     const Color inactiveColor = Color(0xFF737373);
 
     return Scaffold(
-      // The body is wrapped in an IndexedStack to preserve the scroll
-      // position of pages when switching tabs.
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
       ),
-
-      // Theme wrapper ensures the background color extends to the bottom of the screen
-      // even on devices with home indicators (iPhone 13/14/15, etc.)
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(
           canvasColor: navBgColor,
@@ -57,12 +59,9 @@ class _NagabantayNavBarState extends State<NagabantayNavBar> {
           backgroundColor: navBgColor,
           selectedItemColor: activeColor,
           unselectedItemColor: inactiveColor,
-          iconSize: 24, // Slightly larger for better touch targets
-
-          // These properties ensure the bar looks good on all screen sizes
+          iconSize: 24,
           elevation: 8,
           landscapeLayout: BottomNavigationBarLandscapeLayout.spread,
-
           selectedLabelStyle: const TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 12,
@@ -73,13 +72,11 @@ class _NagabantayNavBarState extends State<NagabantayNavBar> {
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
-
           onTap: (index) {
             setState(() {
               _currentIndex = index;
             });
           },
-
           items: const [
             BottomNavigationBarItem(
               icon: Icon(PhosphorIcons.houseFill),

@@ -7,6 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 import 'package:nagabantay_mobile_app/widgets/responsive_scaffold.dart';
 
+import 'home_page.dart';
+
 class SetupPage extends StatefulWidget {
   final String phoneNumber;
   const SetupPage({super.key, required this.phoneNumber});
@@ -130,7 +132,7 @@ class _SetupPageState extends State<SetupPage> {
                     onPressed: () {
                       Navigator.of(context).pop();
                       Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const SignUpPage()),
+                        MaterialPageRoute(builder: (_) => HomePage(phoneNumber: widget.phoneNumber)),
                             (route) => false,
                       );
                     },
@@ -277,18 +279,21 @@ class _SetupPageState extends State<SetupPage> {
                         const SizedBox(height: 40),
                         SizedBox(
                           width: double.infinity,
-                          height: 45,
+                          height: 40,
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _saveUserData,
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (_) => HomePage(phoneNumber: widget.phoneNumber)),
+                                    (route) => false,
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF23552C),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              elevation: 4,
                             ),
-                            child: _isLoading
-                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Text('Confirm', style: TextStyle(fontFamily: 'Montserrat', fontSize: 16, fontWeight: FontWeight.bold)),
+                            child: const Text('Done', style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w600)),
                           ),
                         ),
                         const SizedBox(height: 24),
