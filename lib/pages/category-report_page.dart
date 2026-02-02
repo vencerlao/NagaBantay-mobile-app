@@ -32,7 +32,7 @@ class _ReportPageState extends State<ReportPage> {
       MaterialPageRoute(
         builder: (_) => ReportContinuePage(
           draft: draft,
-          phoneNumber: widget.phoneNumber, // use widget.phoneNumber here
+          phoneNumber: widget.phoneNumber,
         ),
       ),
     );
@@ -168,7 +168,7 @@ class _ReportPageState extends State<ReportPage> {
                       MaterialPageRoute(
                         builder: (_) => ReportContinuePage(
                           draft: draft,
-                          phoneNumber: widget.phoneNumber, // pass the phone number here
+                          phoneNumber: widget.phoneNumber,
                         ),
                       ),
                     );

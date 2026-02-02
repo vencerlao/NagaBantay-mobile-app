@@ -207,7 +207,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 ),
                 const SizedBox(height: 20),
 
-                /// Old Password
                 const Text('Old Password',
                     style: TextStyle(
                         color: Color(0xFF06370b),
