@@ -7,7 +7,9 @@ import 'package:nagabantay_mobile_app/pages/hazardmap_page.dart';
 import 'package:nagabantay_mobile_app/services/flood_map_service.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final String phoneNumber;
+
+  const HomePage({super.key, required this.phoneNumber});
 
   static const Color primaryGreen = Color(0xFF06370B);
   static const Color borderGreen = Color(0xFF669062);
