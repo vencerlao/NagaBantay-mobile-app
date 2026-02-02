@@ -17,7 +17,6 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-  // Normalize phone: digits only, keep last 10 digits if longer
   String _normalizePhone(String raw) {
     final digitsOnly = raw.replaceAll(RegExp(r'[^0-9]'), '');
     return digitsOnly.length > 10 ? digitsOnly.substring(digitsOnly.length - 10) : digitsOnly;

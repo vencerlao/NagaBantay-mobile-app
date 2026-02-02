@@ -94,7 +94,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                   MaterialPageRoute(
                     builder: (_) => NagabantayNavBar(
                       initialIndex: 0,
-                      phoneNumber: widget.phoneNumber, // ✅ pass the phone number
+                      phoneNumber: widget.phoneNumber,
                     ),
                   ),
                       (route) => false,
@@ -121,11 +121,10 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   void initState() {
     super.initState();
 
-    // Listen for signed-in user
     FirebaseAuth.instance.authStateChanges().listen((user) {
       setState(() {
         _currentUser = user;
-        _authChecked = true; // Auth state has been checked
+        _authChecked = true;
       });
     });
 
@@ -544,7 +543,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                           'description': description,
                           'latitude': loc.latitude,
                           'longitude': loc.longitude,
-                          'my_naga_status': 'Submitted',
+                          'my_naga_status': 'not yet responded',
                           'phone': phoneNumber,
                           'timestamp': FieldValue.serverTimestamp(),
                         });

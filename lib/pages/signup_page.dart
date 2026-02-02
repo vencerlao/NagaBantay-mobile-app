@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:nagabantay_mobile_app/pages/setup_page.dart';
@@ -68,7 +67,6 @@ class _SignUpPageState extends State<SignUpPage> {
     final normalized = _normalizePhone(phoneNumber);
 
     if (exists) {
-      // User exists → go to LoginPage and pass phone
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -76,7 +74,6 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       );
     } else {
-      // New user → go to SetupPage and pass phone
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
