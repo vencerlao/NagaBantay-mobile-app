@@ -8,6 +8,8 @@ import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 import 'package:nagabantay_mobile_app/widgets/responsive_scaffold.dart';
 import 'package:nagabantay_mobile_app/services/local_auth_store.dart';
 
+import 'home_page.dart';
+
 class SetupPage extends StatefulWidget {
   final String phoneNumber;
   const SetupPage({super.key, required this.phoneNumber});
@@ -144,7 +146,7 @@ class _SetupPageState extends State<SetupPage> {
                     onPressed: () {
                       Navigator.of(context).pop();
                       Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const SignUpPage()),
+                        MaterialPageRoute(builder: (_) => HomePage(phoneNumber: widget.phoneNumber)),
                             (route) => false,
                       );
                     },
@@ -226,6 +228,45 @@ class _SetupPageState extends State<SetupPage> {
                               color: const Color(0xFFB0CEAC),
                               border: Border.all(color: const Color(0xFF23552C)),
                               borderRadius: BorderRadius.circular(8),
+          final keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: Padding(
+                padding: EdgeInsets.only(bottom: keyboardPadding),
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 18),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Complete your\naccount setup',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 24,
+                            color: Color(0xFF23552C),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildLabel('Phone Number'),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFB0CEAC),
+                                border: Border.all(color: const Color(0xFF23552C)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text('+63', style: TextStyle(fontFamily: 'Montserrat', color: Color(0xFF23552C))),
                             ),
                             child: const Text(
                               '+63',
@@ -296,20 +337,26 @@ class _SetupPageState extends State<SetupPage> {
                             ),
                           ),
                         ),
-                      ),
-                      if (_barangayError != null) _buildErrorText(_barangayError!),
+                        if (_barangayError != null) _buildErrorText(_barangayError!),
 
-                      const SizedBox(height: 40),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 45,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _saveUserData,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF23552C),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 4,
+                        const SizedBox(height: 40),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 40,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (_) => HomePage(phoneNumber: widget.phoneNumber)),
+                                    (route) => false,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF23552C),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('Done', style: TextStyle(fontFamily: 'Montserrat', fontWeight: FontWeight.w600)),
                           ),
                           child: _isLoading
                               ? const SizedBox(

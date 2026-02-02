@@ -7,9 +7,23 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:nagabantay_mobile_app/pages/changepin_page.dart';
 import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
+import '../services/tflite_service.dart';
+import '../models/report_draft.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+User? _currentUser;
+File? _pickedImage;
+
+
+final ImagePicker _picker = ImagePicker();
 
 class ReportContinuePage extends StatefulWidget {
-  const ReportContinuePage({super.key});
+  final ReportDraft draft;
+  final String phoneNumber;
+  const ReportContinuePage({super.key, required this.draft, required this.phoneNumber,});
 
   @override
   State<ReportContinuePage> createState() => _ReportContinuePageState();
@@ -20,13 +34,16 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   final TextEditingController _descriptionController = TextEditingController();
   final MapController _mapController = MapController();
 
-  LatLng? _selectedLocation; // default location
+  LatLng? _selectedLocation;
   String _address = 'Fetching address...';
+
+  bool _authChecked = false;
+
 
   void _showSuccessDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // user must tap button
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -73,12 +90,14 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                 ),
               ),
               onPressed: () {
-                // Replace the entire stack with the NavBar, opening on Home.
-                // This guarantees the BottomNavigationBar is visible and we
-                // avoid rebuilding multiple home pages on the stack.
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const NagabantayNavBar(initialIndex: 0)),
-                  (route) => false,
+                  MaterialPageRoute(
+                    builder: (_) => NagabantayNavBar(
+                      initialIndex: 0,
+                      phoneNumber: widget.phoneNumber, // ✅ pass the phone number
+                    ),
+                  ),
+                      (route) => false,
                 );
               },
               child: const Text(
@@ -101,7 +120,17 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation(); // fetch device location when page loads
+
+    // Listen for signed-in user
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      setState(() {
+        _currentUser = user;
+        _authChecked = true; // Auth state has been checked
+      });
+    });
+
+    _descriptionController.text = widget.draft.description ?? '';
+    _getCurrentLocation();
   }
 
   @override
@@ -110,12 +139,10 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
     super.dispose();
   }
 
-  // ===== Get device location =====
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Check if location service is enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       setState(() {
@@ -124,7 +151,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
       return;
     }
 
-    // Check permissions
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -142,20 +168,32 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
       return;
     }
 
-    // ✅ Get current position
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
 
-    // ✅ Update selected location
     setState(() {
       _selectedLocation = LatLng(position.latitude, position.longitude);
     });
 
-    // ✅ Get address
     _getAddressFromLatLng(_selectedLocation!);
   }
 
-  // ===== Reverse geocode to get address =====
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _pickedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+
   Future<void> _getAddressFromLatLng(LatLng location) async {
     try {
       List<Placemark> placemarks =
@@ -205,7 +243,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ===== Choose Location =====
               const Text(
                 'Choose location',
                 style: TextStyle(
@@ -221,13 +258,12 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                 borderRadius: BorderRadius.circular(12),
                 child: Stack(
                   children: [
-                    // Map
                     SizedBox(
                       height: 220,
                       width: double.infinity,
                       child: FlutterMap(
                         options: MapOptions(
-                          center: _selectedLocation!, // non-null because of loading check
+                          center: _selectedLocation!,
                           zoom: 16,
                           minZoom: 10,
                           maxZoom: 18,
@@ -248,7 +284,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                           MarkerLayer(
                             markers: [
                               Marker(
-                                point: _selectedLocation!, // non-null assertion
+                                point: _selectedLocation!,
                                 width: 40,
                                 height: 40,
                                 child: const Icon(
@@ -264,25 +300,26 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
                     ),
 
-                    // Change Pin Button
                     Positioned(
                       bottom: 12,
                       right: 12,
                       child: ElevatedButton.icon(
-                        onPressed: () async { // <- make this async
+                        onPressed: () async {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const ChangePinPage()),
                           );
 
                           if (result != null) {
-                            setState(() {
-                              _selectedLocation = result['location'] as LatLng;
-                              _address = result['address'] as String;
-                            });
-
-                            // Move map to new location
-                            _mapController.move(_selectedLocation!, 16);
+                            final loc = result['location'] as LatLng?;
+                            final addr = result['address'] as String?;
+                            if (loc != null && addr != null) {
+                              setState(() {
+                                _selectedLocation = loc;
+                                _address = addr;
+                              });
+                              _mapController.move(_selectedLocation!, 16);
+                            }
                           }
                         },
 
@@ -308,7 +345,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
               const SizedBox(height: 8),
 
-              // Location Address (dynamic)
               Row(
                 children: [
                   const Icon(
@@ -333,7 +369,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
               const SizedBox(height: 28),
 
-              // ===== Description =====
               const Text(
                 'Tell us what happened',
                 style: TextStyle(
@@ -348,6 +383,9 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 5,
+                onChanged: (value) {
+                  widget.draft.description = value;
+                },
                 decoration: InputDecoration(
                   hintText: 'Describe the incident in detail...',
                   hintStyle: const TextStyle(
@@ -402,7 +440,6 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
               const SizedBox(height: 24),
 
-              // ===== Attach Media =====
               const Text(
                 'Attach photos or videos (optional)',
                 style: TextStyle(
@@ -421,11 +458,20 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                 borderType: BorderType.RRect,
                 radius: const Radius.circular(8),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () async {
+                    await _pickImage();
+                  },
+
                   child: SizedBox(
                     width: double.infinity,
                     height: 120,
-                    child: Column(
+                    child: _pickedImage != null
+                        ? Image.file(
+                      _pickedImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    )
+                        : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
@@ -451,16 +497,91 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
               const SizedBox(height: 32),
 
-              // ===== Continue Button =====
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (!_formKey.currentState!.validate()) return;
+                    onPressed: () async {
+                      final phoneNumber = widget.phoneNumber;
 
-                    _showSuccessDialog();
-                  },
-                  style: ElevatedButton.styleFrom(
+                      final description = _descriptionController.text.trim();
+                      final loc = _selectedLocation;
+
+                      if (description.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please provide a description')),
+                        );
+                        return;
+                      }
+
+                      if (loc == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Location not selected')),
+                        );
+                        return;
+                      }
+
+                      widget.draft
+                        ..description = description
+                        ..latitude = loc.latitude
+                        ..longitude = loc.longitude;
+
+                      try {
+                        final querySnapshot = await FirebaseFirestore.instance.collection('reports').get();
+                        int maxNumber = 0;
+
+                        for (var doc in querySnapshot.docs) {
+                          final number = int.tryParse(doc.id.replaceAll(RegExp(r'[^0-9]'), ''));
+                          if (number != null && number > maxNumber) maxNumber = number;
+                        }
+
+                        final nextNumber = maxNumber + 1;
+                        final nextId = 'R${nextNumber.toString().padLeft(3, '0')}';
+
+                        final docRef = FirebaseFirestore.instance.collection('reports').doc(nextId);
+                        await docRef.set({
+                          'report_id': nextId,
+                          'issue': widget.draft.issue ?? 'Unknown',
+                          'description': description,
+                          'latitude': loc.latitude,
+                          'longitude': loc.longitude,
+                          'my_naga_status': 'Pending',
+                          'phone': phoneNumber,
+                          'timestamp': FieldValue.serverTimestamp(),
+                        });
+
+                        _showSuccessDialog();
+
+                        try {
+                          final tfliteService = TFLiteService();
+                          await tfliteService.loadModel();
+                          final modelOutput = await tfliteService.predict(description);
+
+                          final severityLabel = modelOutput['severity'] ?? 'Unknown';
+                          final severityConfidence = modelOutput['severity_confidence'] ?? 0.0;
+                          final officeLabel = modelOutput['office'] ?? 'Unknown';
+                          final officeConfidence = modelOutput['office_confidence'] ?? 0.0;
+
+                          await docRef.update({
+                            'predicted_severity': severityLabel,
+                            'severity_confidence': severityConfidence,
+                            'office': officeLabel,
+                            'office_confidence': officeConfidence,
+                          });
+
+                          print('AI labels saved successfully');
+                        } catch (e, s) {
+                          print('TFLite prediction failed: $e');
+                          print(s);
+                        }
+
+                      } catch (e) {
+                        print('Firestore write failed: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to submit report: $e')),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF23552C),
                     foregroundColor: Colors.white,
                     textStyle: const TextStyle(
