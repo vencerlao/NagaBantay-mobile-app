@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:nagabantay_mobile_app/services/local_auth_store.dart';
 import 'package:nagabantay_mobile_app/pages/splash_page.dart';
-
 import 'personal_information_page.dart';
 import 'about_us_page.dart';
 import 'terms_page.dart';
@@ -31,85 +29,14 @@ class _AccountPageState extends State<AccountPage> {
 
       if (user != null && user.phoneNumber != null) {
         docId = _normalizePhone(user.phoneNumber!);
-        debugPrint('Account 🔥 DOC ID (auth): $docId');
+        debugPrint('Account DOC ID (auth): $docId');
       }
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.redAccent,
-                  child: Text(
-                    '!',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Are you logging out?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF06370b),
-                    fontVariations: [FontVariation('wght', 700)],
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'You can always log back in at any time.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF06370b),
-                    fontVariations: [FontVariation('wght', 400)],
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    onPressed: () async {
-                      Navigator.pop(context);
-
-                      try {
-                        await FirebaseAuth.instance.signOut();
-                      } catch (_) {
-                      }
-
-                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (_) => const SplashPage(),
-                        ),
-                            (route) => false,
-                      );
 
       if (docId == null) {
         final stored = LocalAuthStore.loggedPhone;
         if (stored != null && stored.isNotEmpty) {
           docId = _normalizePhone(stored);
-          debugPrint('Account 🔥 DOC ID (local): $docId');
+          debugPrint('Account DOC ID (local): $docId');
         }
       }
 
@@ -137,24 +64,95 @@ class _AccountPageState extends State<AccountPage> {
     ];
 
     return '${months[dt.month]} ${dt.day}, ${dt.year}';
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.redAccent,
+                  child: Text(
+                    '!',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontVariations: [FontVariation('wght', 800)],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Are you logging out?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    color: Color(0xFF06370b),
+                    fontVariations: [FontVariation('wght', 700)],
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'You can always log back in at any time.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    color: Color(0xFF06370b),
+                    fontVariations: [FontVariation('wght', 400)],
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const SplashPage()),
+                            (route) => false,
+                      );
+                    },
+                    child: const Text(
+                      'Log out',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontVariations: [FontVariation('wght', 600)],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF255e1f)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                     child: const Text(
                       'Cancel',
                       style: TextStyle(
-                        color: Color(0xFF255e1f),
                         fontFamily: 'Montserrat',
-                        fontSize: 16,
                         fontVariations: [FontVariation('wght', 500)],
                       ),
                     ),
@@ -337,105 +335,6 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.redAccent,
-                  child: Text(
-                    '!',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontVariations: [FontVariation('wght', 800)],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Are you logging out?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: Color(0xFF06370b),
-                    fontVariations: [FontVariation('wght', 700)],
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'You can always log back in at any time.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: Color(0xFF06370b),
-                    fontVariations: [FontVariation('wght', 400)],
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    ),
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      await FirebaseAuth.instance.signOut();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const SplashPage()),
-                            (route) => false,
-                      );
-                    },
-                    child: const Text(
-                      'Log out',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontVariations: [FontVariation('wght', 600)],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontVariations: [FontVariation('wght', 500)],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildTile(
       BuildContext context, {

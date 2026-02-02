@@ -191,14 +191,29 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  Widget _buildInformationContent() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _infoContainerOne(),
-          const SizedBox(height: 30),
-          _infoContainerTwo(),
-        ],
+  // Filter button used in the Information tab
+  Widget _filterButton(String label, String filter) {
+    final selected = _infoFilter == filter;
+    return GestureDetector(
+      onTap: () => setState(() => _infoFilter = filter),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? selectedBgColor : unselectedBgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 14,
+              color: selected ? selectedTextColor : unselectedTextColor,
+              fontVariations: [FontVariation('wght', selected ? 700 : 400)],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -244,6 +259,73 @@ class _AlertsPageState extends State<AlertsPage> {
                 );
               }
 
+               // Build a simple list of alerts
+               return ListView.separated(
+                 padding: const EdgeInsets.symmetric(vertical: 8),
+                 itemCount: alerts.length,
+                 separatorBuilder: (_, __) => const SizedBox(height: 12),
+                 itemBuilder: (context, index) {
+                   final data = alerts[index];
+                   final ts = data['createdAt'] as Timestamp?;
+                   final d = ts?.toDate();
+
+                   return GestureDetector(
+                     onTap: () => _showAlertDetails(context, data),
+                     child: Container(
+                       padding: const EdgeInsets.all(12),
+                       decoration: BoxDecoration(
+                         color: unselectedBgColor,
+                         borderRadius: BorderRadius.circular(14),
+                         border: Border.all(color: headerTextColor, width: 1.2),
+                       ),
+                       child: Row(
+                         children: [
+                           const Icon(Icons.warning_rounded, size: 36, color: headerTextColor),
+                           const SizedBox(width: 12),
+                           Expanded(
+                             child: Column(
+                               crossAxisAlignment: CrossAxisAlignment.start,
+                               children: [
+                                 Text(
+                                   data['subject'] ?? 'Alert',
+                                   maxLines: 1,
+                                   overflow: TextOverflow.ellipsis,
+                                   style: TextStyle(
+                                     fontFamily: 'Montserrat',
+                                     fontSize: 16,
+                                     fontVariations: const [FontVariation('wght', 600)],
+                                     color: headerTextColor,
+                                   ),
+                                 ),
+                                 const SizedBox(height: 4),
+                                 Text(
+                                   '${data['from'] ?? ''} | ${d != null ? '${_getMonthName(d.month)} ${d.day}, ${d.year}' : '-'}',
+                                   maxLines: 1,
+                                   overflow: TextOverflow.ellipsis,
+                                   style: TextStyle(
+                                     fontFamily: 'Montserrat',
+                                     fontSize: 12,
+                                     fontVariations: const [FontVariation('wght', 400)],
+                                     color: headerTextColor,
+                                   ),
+                                 ),
+                               ],
+                             ),
+                           ),
+                           const Icon(Icons.chevron_right, size: 24, color: Colors.black54),
+                         ],
+                       ),
+                     ),
+                   );
+                 },
+               );
+             },
+           ),
+         ),
+       ],
+     );
+   }
+
   Widget _buildSafetyGuidesContent() {
     return SingleChildScrollView(
       child: Column(
@@ -255,62 +337,6 @@ class _AlertsPageState extends State<AlertsPage> {
           _fireSafetyContainer(),
         ],
       ),
-    );
-  }
-
-                  return GestureDetector(
-                    onTap: () => _showAlertDetails(context, data),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: unselectedBgColor,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: headerTextColor, width: 1.2),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.warning_rounded, size: 36, color: headerTextColor),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  data['subject'] ?? 'Alert',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 16,
-                                    fontVariations: const [FontVariation('wght', 600)],
-                                    color: headerTextColor,
-                                  ),
-                                ),
-                                Text(
-                                  '${data['from'] ?? ''} | ${d != null ? '${_getMonthName(d.month)} ${d.day}, ${d.year}' : '-'}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    fontSize: 12,
-                                    fontVariations: const [FontVariation('wght', 400)],
-                                    color: headerTextColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right, size: 24, color: Colors.black54),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 
@@ -349,19 +375,6 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  Widget _buildSafetyGuidesContent() {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      children: [
-        _typhoonSafetyContainer(),
-        const SizedBox(height: 12),
-        _earthquakeSafetyContainer(),
-        const SizedBox(height: 12),
-        _fireSafetyContainer(),
-        const SizedBox(height: 20),
-      ],
-    );
-  }
 
   Widget _baseSafetyContainer({
     required IconData icon,
