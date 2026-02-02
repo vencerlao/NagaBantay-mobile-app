@@ -191,40 +191,14 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  Widget _filterButton(String label, String value) {
-    final bool isSelected = _infoFilter == value;
-    return GestureDetector(
-      onTap: () => setState(() => _infoFilter = value),
-      child: Container(
-        height: 28,
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFB7D1BB) : unselectedBgColor,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: borderColor),
-        ),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isSelected) ...[
-                const Icon(Icons.check, size: 14, color: headerTextColor),
-                const SizedBox(width: 4),
-              ],
-              Flexible(
-                child: Text(
-                  label.toUpperCase(),
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 10,
-                    fontVariations: const [FontVariation('wght', 600)],
-                    color: headerTextColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+  Widget _buildInformationContent() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _infoContainerOne(),
+          const SizedBox(height: 30),
+          _infoContainerTwo(),
+        ],
       ),
     );
   }
@@ -270,14 +244,19 @@ class _AlertsPageState extends State<AlertsPage> {
                 );
               }
 
-              return ListView.separated(
-                physics: const BouncingScrollPhysics(),
-                itemCount: alerts.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (_, index) {
-                  final data = alerts[index];
-                  final ts = data['createdAt'] as Timestamp?;
-                  final d = ts?.toDate();
+  Widget _buildSafetyGuidesContent() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _typhoonSafetyContainer(),
+          const SizedBox(height: 12),
+          _earthquakeSafetyContainer(),
+          const SizedBox(height: 12),
+          _fireSafetyContainer(),
+        ],
+      ),
+    );
+  }
 
                   return GestureDetector(
                     onTap: () => _showAlertDetails(context, data),

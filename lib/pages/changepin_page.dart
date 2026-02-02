@@ -17,7 +17,7 @@ class _ChangePinPageState extends State<ChangePinPage> {
   final TextEditingController houseController = TextEditingController();
   final TextEditingController barangayController = TextEditingController();
 
-  LatLng? _selectedLocation; // Nullable because we fetch device location
+  LatLng? _selectedLocation;
   String _address = 'Fetching address...';
 
   final MapController _mapController = MapController();
@@ -28,7 +28,6 @@ class _ChangePinPageState extends State<ChangePinPage> {
     _getCurrentLocation();
   }
 
-  // ===== Get device location =====
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -56,7 +55,6 @@ class _ChangePinPageState extends State<ChangePinPage> {
       return;
     }
 
-    // ✅ Get device position
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
@@ -67,11 +65,9 @@ class _ChangePinPageState extends State<ChangePinPage> {
 
     _getAddressFromLatLng(_selectedLocation!);
 
-    // Move map to current location
     _mapController.move(_selectedLocation!, 16);
   }
 
-  // ===== Reverse geocode to get address =====
   Future<void> _getAddressFromLatLng(LatLng location) async {
     try {
       List<Placemark> placemarks =
@@ -143,7 +139,6 @@ class _ChangePinPageState extends State<ChangePinPage> {
             ],
           ),
 
-          // Back button
           Positioned(
             top: 40,
             left: 16,
@@ -151,7 +146,7 @@ class _ChangePinPageState extends State<ChangePinPage> {
               backgroundColor: Colors.white,
               child: IconButton(
                 icon: const Icon(
-                  PhosphorIcons.caretLeft, // <- your custom icon
+                  PhosphorIcons.caretLeft,
                   size: 22.0,
                   color: Color(0xff06370b),
                 ),
@@ -160,8 +155,6 @@ class _ChangePinPageState extends State<ChangePinPage> {
             ),
           ),
 
-
-          // Bottom panel
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -281,7 +274,6 @@ class _ChangePinPageState extends State<ChangePinPage> {
                         child: ElevatedButton(
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
-                              // Go back to the previous page and pass location & address
                               Navigator.pop(context, {
                                 'location': _selectedLocation,
                                 'address': _address,

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:nagabantay_mobile_app/pages/continue-report_page.dart';
+import 'package:nagabantay_mobile_app/models/report_draft.dart';
 
 class ReportPage extends StatefulWidget {
-  const ReportPage({super.key});
+  final String phoneNumber;
+
+  const ReportPage({super.key, required this.phoneNumber});
 
   @override
   State<ReportPage> createState() => _ReportPageState();
 }
 
 class _ReportPageState extends State<ReportPage> {
-  // Options for each category
   final Map<String, List<String>> categoryOptions = {
     'Solid Waste Management': ['Uncollected Garbage', 'Hauling of Cut Tree or Trimmings'],
     'Environment & Natural Resources': ['Overgrown Trees and Plants', 'Wildlife for Rescue',
@@ -18,19 +20,34 @@ class _ReportPageState extends State<ReportPage> {
 
   };
 
-  // Track selected options per category
-  final Map<String, Set<String>> selectedChipsPerCategory = {};
+  String? selectedIssue;
 
-  void toggleChip(String category, String label) {
+  final ReportDraft draft = ReportDraft();
+
+  void goToNextPage(String selectedCategory, String phoneNumber) {
+    draft.issue = selectedCategory;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReportContinuePage(
+          draft: draft,
+          phoneNumber: widget.phoneNumber, // use widget.phoneNumber here
+        ),
+      ),
+    );
+  }
+
+  void toggleChip(String label) {
     setState(() {
-      selectedChipsPerCategory.putIfAbsent(category, () => <String>{});
-      if (selectedChipsPerCategory[category]!.contains(label)) {
-        selectedChipsPerCategory[category]!.remove(label);
+      if (selectedIssue == label) {
+        selectedIssue = null;
       } else {
-        selectedChipsPerCategory[category]!.add(label);
+        selectedIssue = label;
       }
     });
   }
+
 
   Widget buildCategoryGroup(String title, List<String> items) {
     return Column(
@@ -49,7 +66,8 @@ class _ReportPageState extends State<ReportPage> {
           spacing: 8,
           runSpacing: 8,
           children: items.map((item) {
-            final isSelected = selectedChipsPerCategory[title]?.contains(item) ?? false;
+            final isSelected = selectedIssue == item;
+
             return ChoiceChip(
               label: Text(
                 item,
@@ -61,15 +79,20 @@ class _ReportPageState extends State<ReportPage> {
                 ),
               ),
               selected: isSelected,
-              onSelected: (_) => toggleChip(title, item),
+              onSelected: (_) {
+                setState(() {
+                  if (selectedIssue == item) {
+                    selectedIssue = null;
+                  } else {
+                    selectedIssue = item;
+                  }
+                });
+              },
 
-              // SELECTED (filled green)
               selectedColor: const Color(0xFF23552C),
 
-              // UNSELECTED (hollow)
               backgroundColor: Colors.transparent,
 
-              // Border for hollow look
               shape: StadiumBorder(
                 side: BorderSide(
                   color: const Color(0xFF23552C),
@@ -77,7 +100,6 @@ class _ReportPageState extends State<ReportPage> {
                 ),
               ),
 
-              // Remove default checkmark padding look
               showCheckmark: false,
             );
           }).toList(),
@@ -90,22 +112,19 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   bool hasSelection() {
-    return selectedChipsPerCategory.values.any((set) => set.isNotEmpty);
+    return selectedIssue != null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar removed to eliminate the white header; content renders directly
-      // under the status bar. If you want to avoid overlap with system UI,
-      // we can wrap the body with SafeArea — tell me if you'd like that.
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
-        toolbarHeight: 48, // compact height
+        toolbarHeight: 48,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -125,7 +144,6 @@ class _ReportPageState extends State<ReportPage> {
             ),
             const SizedBox(height: 24),
 
-            // Build all category groups
             ...categoryOptions.entries.map((entry) {
               return buildCategoryGroup(entry.key, entry.value);
             }).toList(),
@@ -134,18 +152,29 @@ class _ReportPageState extends State<ReportPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  if (!hasSelection()) {
+                onPressed: () async {
+                  if (selectedIssue == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please select at least one option')),
+                      const SnackBar(content: Text('Please select an issue')),
                     );
-                  } else {
-                    // Navigate to your category report page and pass selections if needed
+                    return;
+                  }
+
+                  draft.issue = selectedIssue;
+
+                  try {
                     Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                    builder: (context) => const ReportContinuePage(),
-                    ),
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ReportContinuePage(
+                          draft: draft,
+                          phoneNumber: widget.phoneNumber, // pass the phone number here
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to save report: $e')),
                     );
                   }
                 },

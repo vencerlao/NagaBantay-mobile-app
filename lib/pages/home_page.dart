@@ -8,7 +8,9 @@ import 'package:nagabantay_mobile_app/services/flood_map_service.dart';
 import 'package:nagabantay_mobile_app/services/local_auth_store.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final String phoneNumber;
+
+  const HomePage({super.key, required this.phoneNumber});
 
   static const Color primaryGreen = Color(0xFF06370B);
   static const Color borderGreen = Color(0xFF669062);
@@ -95,31 +97,80 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildReportStatusSection(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, authSnapshot) {
-        String userPhoneId = '';
+  Widget _buildReportStatusSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Report Status',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 22,
+            fontVariations: [FontVariation('wght', 700)],
+            color: primaryGreen,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _bigStatusCard(
+                icon: PhosphorIcons.checkCircleFill,
+                label: 'Completed',
+                count: 0,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _bigStatusCard(
+                icon: PhosphorIcons.starFill,
+                label: 'Ratings',
+                count: 0,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-        final authUser = authSnapshot.data;
-        if (authUser != null && authUser.phoneNumber != null) {
-          userPhoneId = _normalizePhone(authUser.phoneNumber!);
-        }
+  Widget _buildStatusButtons() {
+    return Row(
+      children: [
+        _smallStatusChip(PhosphorIcons.fileTextFill, 'Submitted', 0, primaryGreen),
+        const SizedBox(width: 8),
+        _smallStatusChip(PhosphorIcons.hourglassFill, 'Pending', 0, primaryGreen),
+        const SizedBox(width: 8),
+        _smallStatusChip(PhosphorIcons.xCircleFill, 'Cancelled', 0, primaryGreen),
+      ],
+    );
+  }
 
-        if (userPhoneId.isEmpty) {
-          final stored = LocalAuthStore.loggedPhone;
-          if (stored != null && stored.isNotEmpty) {
-            userPhoneId = _normalizePhone(stored);
-            debugPrint('FINAL DOC ID USED (local store in report section): $userPhoneId');
-          }
-        }
-
-        if (userPhoneId.isEmpty) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Report Status',
+  Widget _smallStatusChip(IconData icon, String label, int count, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Color(0xFF669062), width: 2.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   fontSize: 22,
@@ -495,7 +546,6 @@ class HomePage extends StatelessWidget {
     });
   }
 }
-
 
 class MapOverviewCard extends StatelessWidget {
   const MapOverviewCard({super.key});

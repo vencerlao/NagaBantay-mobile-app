@@ -33,6 +33,77 @@ class _AccountPageState extends State<AccountPage> {
         docId = _normalizePhone(user.phoneNumber!);
         debugPrint('Account 🔥 DOC ID (auth): $docId');
       }
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.redAccent,
+                  child: Text(
+                    '!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Are you logging out?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF06370b),
+                    fontVariations: [FontVariation('wght', 700)],
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'You can always log back in at any time.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF06370b),
+                    fontVariations: [FontVariation('wght', 400)],
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(context);
+
+                      try {
+                        await FirebaseAuth.instance.signOut();
+                      } catch (_) {
+                      }
+
+                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (_) => const SplashPage(),
+                        ),
+                            (route) => false,
+                      );
 
       if (docId == null) {
         final stored = LocalAuthStore.loggedPhone;
@@ -66,6 +137,35 @@ class _AccountPageState extends State<AccountPage> {
     ];
 
     return '${months[dt.month]} ${dt.day}, ${dt.year}';
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF255e1f)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Color(0xFF255e1f),
+                        fontFamily: 'Montserrat',
+                        fontSize: 16,
+                        fontVariations: [FontVariation('wght', 500)],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -74,7 +174,6 @@ class _AccountPageState extends State<AccountPage> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          /// ================= HEADER =================
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(25, 100, 25, 40),
@@ -175,7 +274,6 @@ class _AccountPageState extends State<AccountPage> {
             ),
           ),
 
-          /// ================= MENU =================
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(top: 20, left: 10, right: 10),

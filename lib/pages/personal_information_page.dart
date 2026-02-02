@@ -10,7 +10,6 @@ class PersonalInformationPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // ===== AppBar =====
       appBar: AppBar(
         toolbarHeight: 80.0,
         elevation: 0,
@@ -35,8 +34,6 @@ class PersonalInformationPage extends StatelessWidget {
         ),
       ),
 
-
-      // ===== Content =====
       body: Column(
         children: [
           _buildItem(
@@ -65,7 +62,7 @@ class PersonalInformationPage extends StatelessWidget {
             title: 'Delete Account',
             isDestructive: true,
             onTap: () {
-              // TODO: Show confirmation dialog
+              // TODO: confirmation dialog
             },
           ),
         ],
