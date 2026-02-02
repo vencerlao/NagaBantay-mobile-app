@@ -58,11 +58,25 @@ class HomePage extends StatelessWidget {
           child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             stream: _userDocStream(),
             builder: (context, snapshot) {
-              String firstName = '';
+              String firstName = 'User';
 
-              if (snapshot.hasData && snapshot.data!.exists) {
-                final data = snapshot.data!.data() ?? <String, dynamic>{};
-                firstName = (data['firstName'] ?? '').toString().trim();
+              if (snapshot.connectionState == ConnectionState.active &&
+                  snapshot.hasData &&
+                  snapshot.data!.exists) {
+                final data = snapshot.data!.data();
+
+                if (data != null) {
+                  firstName = (data['firstName'] ??
+                      data['firstname'] ??
+                      data['first_name'] ??
+                      '')
+                      .toString()
+                      .trim();
+
+                  if (firstName.isEmpty) {
+                    firstName = 'User';
+                  }
+                }
               }
 
               return Text.rich(
@@ -75,7 +89,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     TextSpan(
-                      text: firstName.isNotEmpty ? '$firstName!' : 'User!',
+                      text: '$firstName!',
                       style: const TextStyle(
                         fontVariations: [FontVariation('wght', 700)],
                       ),
@@ -97,261 +111,143 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildReportStatusSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Report Status',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 22,
-            fontVariations: [FontVariation('wght', 700)],
-            color: primaryGreen,
+  Widget _buildReportStatusSection(BuildContext context) {
+    String userPhoneId = _normalizePhone(phoneNumber);
+    if (userPhoneId.isEmpty) {
+      final stored = LocalAuthStore.loggedPhone;
+      if (stored != null && stored.isNotEmpty) userPhoneId = _normalizePhone(stored);
+    }
+
+    if (userPhoneId.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Report Status',
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 22,
+              fontVariations: [FontVariation('wght', 700)],
+              color: primaryGreen,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _bigStatusCard(
-                icon: PhosphorIcons.checkCircleFill,
-                label: 'Completed',
-                count: 0,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _bigStatusCard(
-                icon: PhosphorIcons.starFill,
-                label: 'Ratings',
-                count: 0,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusButtons() {
-    return Row(
-      children: [
-        _smallStatusChip(PhosphorIcons.fileTextFill, 'Submitted', 0, primaryGreen),
-        const SizedBox(width: 8),
-        _smallStatusChip(PhosphorIcons.hourglassFill, 'Pending', 0, primaryGreen),
-        const SizedBox(width: 8),
-        _smallStatusChip(PhosphorIcons.xCircleFill, 'Cancelled', 0, primaryGreen),
-      ],
-    );
-  }
-
-  Widget _smallStatusChip(IconData icon, String label, int count, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Color(0xFF669062), width: 2.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: 6),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 22,
-                  fontVariations: [FontVariation('wght', 700)],
-                  color: primaryGreen,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _bigStatusCard(icon: PhosphorIcons.checkCircleFill, label: 'Completed', count: 0)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _bigStatusCard(icon: PhosphorIcons.starFill, label: 'Ratings', count: 0)),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  _smallStatusChip(
-                    context,
-                    PhosphorIcons.fileTextFill,
-                    'Submitted',
-                    0,
-                    primaryGreen,
-                    statusFilter: 'not yet responded',
-                  ),
-                  const SizedBox(width: 8),
-                  _smallStatusChip(
-                    context,
-                    PhosphorIcons.hourglassFill,
-                    'Pending',
-                    0,
-                    primaryGreen,
-                    statusFilter: 'pending',
-                  ),
-                  const SizedBox(width: 8),
-                  _smallStatusChip(
-                    context,
-                    PhosphorIcons.xCircleFill,
-                    'Cancelled',
-                    0,
-                    primaryGreen,
-                    statusFilter: 'cancelled',
-                  ),
-                ],
-              ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _bigStatusCard(icon: PhosphorIcons.checkCircleFill, label: 'Completed', count: 0)),
+              const SizedBox(width: 12),
+              Expanded(child: _bigStatusCard(icon: PhosphorIcons.starFill, label: 'Ratings', count: 0)),
             ],
-          );
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _smallStatusChip(context, PhosphorIcons.fileTextFill, 'Submitted', 0, primaryGreen, statusFilter: 'not yet responded'),
+              const SizedBox(width: 8),
+              _smallStatusChip(context, PhosphorIcons.hourglassFill, 'Pending', 0, primaryGreen, statusFilter: 'pending'),
+              const SizedBox(width: 8),
+              _smallStatusChip(context, PhosphorIcons.xCircleFill, 'Cancelled', 0, primaryGreen, statusFilter: 'cancelled'),
+            ],
+          ),
+        ],
+      );
+    }
+
+    final reportsQuery = FirebaseFirestore.instance.collection('reports').where('phone', isEqualTo: userPhoneId);
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: reportsQuery.snapshots(),
+      builder: (context, reportsSnapshot) {
+        int completed = 0;
+        int ratings = 0;
+        int submitted = 0;
+        int pending = 0;
+        int cancelled = 0;
+
+        if (reportsSnapshot.hasData) {
+          for (final doc in reportsSnapshot.data!.docs) {
+            final data = doc.data();
+            final status = (data['my_naga_status'] ?? '').toString().trim().toLowerCase();
+
+            if (status == 'done' || status == 'completed') {
+              completed++;
+            } else if (status == 'awaiting review' || status == 'awaiting_review') {
+              ratings++;
+            } else if (status == 'not yet responded' || status == 'not_yet_responded') {
+              submitted++;
+            } else if (status == 'pending') {
+              pending++;
+            } else if (status == 'cancelled' || status == 'canceled') {
+              cancelled++;
+            }
+          }
         }
 
-        final reportsQuery = FirebaseFirestore.instance
-            .collection('reports')
-            .where('phone', isEqualTo: userPhoneId);
-
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: reportsQuery.snapshots(),
-          builder: (context, reportsSnapshot) {
-            int completed = 0;
-            int ratings = 0;
-            int submitted = 0;
-            int pending = 0;
-            int cancelled = 0;
-
-            if (reportsSnapshot.hasData) {
-              for (final doc in reportsSnapshot.data!.docs) {
-                final data = doc.data();
-                final status = (data['my_naga_status'] ?? '').toString().trim().toLowerCase();
-
-                if (status == 'done' || status == 'completed') {
-                  completed++;
-                } else if (status == 'awaiting review' || status == 'awaiting_review') {
-                  ratings++;
-                } else if (status == 'not yet responded' || status == 'not_yet_responded') {
-                  submitted++;
-                } else if (status == 'pending') {
-                  pending++;
-                } else if (status == 'cancelled' || status == 'canceled') {
-                  cancelled++;
-                }
-              }
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Report Status',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 22,
+                fontVariations: [FontVariation('wght', 700)],
+                color: primaryGreen,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
               children: [
-                const Text(
-                  'Report Status',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 22,
-                    fontVariations: [FontVariation('wght', 700)],
-                    color: primaryGreen,
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ReportsListPage(
+                            title: 'Completed',
+                            userPhone: userPhoneId,
+                            statusFilter: 'done',
+                          ),
+                        ),
+                      );
+                    },
+                    child: _bigStatusCard(icon: PhosphorIcons.checkCircleFill, label: 'Completed', count: completed),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ReportsListPage(
-                                title: 'Completed',
-                                userPhone: userPhoneId,
-                                statusFilter: 'done',
-                              ),
-                            ),
-                          );
-                        },
-                        child: _bigStatusCard(
-                          icon: PhosphorIcons.checkCircleFill,
-                          label: 'Completed',
-                          count: completed,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ReportsListPage(
+                            title: 'Ratings',
+                            userPhone: userPhoneId,
+                            statusFilter: 'awaiting review',
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ReportsListPage(
-                                title: 'Ratings',
-                                userPhone: userPhoneId,
-                                statusFilter: 'awaiting review',
-                              ),
-                            ),
-                          );
-                        },
-                        child: _bigStatusCard(
-                          icon: PhosphorIcons.starFill,
-                          label: 'Ratings',
-                          count: ratings,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    _smallStatusChip(
-                      context,
-                      PhosphorIcons.fileTextFill,
-                      'Submitted',
-                      submitted,
-                      primaryGreen,
-                      statusFilter: 'not yet responded',
-                      userPhone: userPhoneId,
-                    ),
-                    const SizedBox(width: 8),
-                    _smallStatusChip(
-                      context,
-                      PhosphorIcons.hourglassFill,
-                      'Pending',
-                      pending,
-                      primaryGreen,
-                      statusFilter: 'pending',
-                      userPhone: userPhoneId,
-                    ),
-                    const SizedBox(width: 8),
-                    _smallStatusChip(
-                      context,
-                      PhosphorIcons.xCircleFill,
-                      'Cancelled',
-                      cancelled,
-                      primaryGreen,
-                      statusFilter: 'cancelled',
-                      userPhone: userPhoneId,
-                    ),
-                  ],
+                      );
+                    },
+                    child: _bigStatusCard(icon: PhosphorIcons.starFill, label: 'Ratings', count: ratings),
+                  ),
                 ),
               ],
-            );
-          },
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _smallStatusChip(context, PhosphorIcons.fileTextFill, 'Submitted', submitted, primaryGreen, statusFilter: 'not yet responded', userPhone: userPhoneId),
+                const SizedBox(width: 8),
+                _smallStatusChip(context, PhosphorIcons.hourglassFill, 'Pending', pending, primaryGreen, statusFilter: 'pending', userPhone: userPhoneId),
+                const SizedBox(width: 8),
+                _smallStatusChip(context, PhosphorIcons.xCircleFill, 'Cancelled', cancelled, primaryGreen, statusFilter: 'cancelled', userPhone: userPhoneId),
+              ],
+            ),
+          ],
         );
       },
     );
@@ -687,7 +583,7 @@ class ReportsListPage extends StatelessWidget {
         stream: query.snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Error: \\${snapshot.error}'));
           }
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = snapshot.data!.docs;
@@ -722,13 +618,12 @@ class ReportsListPage extends StatelessWidget {
               final data = docs[index].data();
               final issue = _safeString(data, ['issue', 'category', 'title'], 'Issue');
               final description = _safeString(data, ['description', 'desc', 'details'], '');
-              final severity = _safeString(data, ['severity', 'priority'], 'N/A');
+              final severity = _safeString(data, ['predicted_severity', 'priority'], 'N/A');
               final ts = _extractTimestamp(data);
               final timeStr = _formatTimestamp(ts);
 
               return GestureDetector(
-                onTap: () {
-                },
+                onTap: () {},
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -814,7 +709,7 @@ class ReportsListPage extends StatelessWidget {
                                     timeStr,
                                     style: const TextStyle(
                                         fontSize: 12,
-                                        fontVariations: const [FontVariation('wght', 400)],
+                                        fontVariations: [FontVariation('wght', 400)],
                                         color: Colors.black54),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
