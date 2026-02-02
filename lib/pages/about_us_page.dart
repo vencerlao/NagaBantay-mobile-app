@@ -16,7 +16,7 @@ class AboutUsPage extends StatelessWidget {
       body: const Padding(
         padding: EdgeInsets.all(16),
         child: Text(
-          'About Nagabantay\n\nThis is where your app description goes.',
+          'About Nagabantay\n\n',
           style: TextStyle(fontSize: 16),
         ),
       ),

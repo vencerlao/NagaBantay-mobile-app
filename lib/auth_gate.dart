@@ -19,6 +19,9 @@ class AuthGate extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
+          return const NagabantayNavBar(initialIndex: 0);
+        }
+
           // If FirebaseAuth is used this will show the app's main UI
           return const NagabantayNavBar(initialIndex: 0);
         }

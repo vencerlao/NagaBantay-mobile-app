@@ -42,7 +42,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// ================= HEADER =================
   Widget _buildHeader() {
     return Row(
       children: [
@@ -82,7 +81,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// ================= REPORT STATUS (TOP TIER) =================
   Widget _buildReportStatusSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,7 +118,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// ================= STATUS BUTTONS (LOWER TIER - RESTORED) =================
   Widget _buildStatusButtons() {
     return Row(
       children: [
@@ -133,7 +130,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// RESTORED: Generation-friendly small chip with Icon, Label, and Count
   Widget _smallStatusChip(IconData icon, String label, int count, Color color) {
     return Expanded(
       child: Container(
@@ -181,7 +177,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// ================= MAP HEADER =================
   Widget _buildMapHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -214,7 +209,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// ================= CARDS =================
   Widget _bigStatusCard({
     required IconData icon,
     required String label,
@@ -277,7 +271,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-/// ================= MAP OVERVIEW CARD =================
 class MapOverviewCard extends StatelessWidget {
   const MapOverviewCard({super.key});
 
@@ -291,7 +284,6 @@ class MapOverviewCard extends StatelessWidget {
         );
       },
       borderRadius: BorderRadius.circular(14),
-      // AspectRatio makes the height adapt based on the width of the device
       child: AspectRatio(
         aspectRatio: 16 / 9,
         child: Container(
@@ -307,8 +299,6 @@ class MapOverviewCard extends StatelessWidget {
             ],
           ),
           child: ClipRRect(
-            // Tip: Set this 2px smaller than the Container radius to prevent
-            // the map from "bleeding" through the border on some screens.
             borderRadius: BorderRadius.circular(12),
             child: IgnorePointer(
               child: MapWidget(

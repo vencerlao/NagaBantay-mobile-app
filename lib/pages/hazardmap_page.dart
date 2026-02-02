@@ -77,7 +77,7 @@ class HazardMapPage extends StatefulWidget {
 }
 
 class _HazardMapPageState extends State<HazardMapPage> {
-  MapMode currentMode = MapMode.Flood; // default mode
+  MapMode currentMode = MapMode.Flood;
 
   late MapboxMap mapboxMap;
   Barangay? selectedBarangay;
@@ -95,8 +95,6 @@ class _HazardMapPageState extends State<HazardMapPage> {
   @override
   void initState() {
     super.initState();
-    MapboxOptions.setAccessToken(mapboxApiKey);
-
     loadEvacuationCenters().then((centers) {
       setState(() {
         evacuationCenters = centers;
@@ -146,7 +144,6 @@ class _HazardMapPageState extends State<HazardMapPage> {
       if (intersect) inside = !inside;
       j = i;
     }
-
     return inside;
   }
 
@@ -154,15 +151,14 @@ class _HazardMapPageState extends State<HazardMapPage> {
   Future<void> addPin(double lng, double lat, {String? label}) async {
     if (_pointAnnotationManager == null) return;
 
-    // Remove existing pins (optional: keep only one pin at a time)
     await _pointAnnotationManager!.deleteAll();
     evacPins.clear();
 
     final options = PointAnnotationOptions(
       geometry: Point(coordinates: Position(lng, lat)),
-      iconImage: "circle-duotone", // your custom PNG
-      iconSize: 0.5,               // adjust size if needed
-      textField: label ?? "",      // optional label shown above pin
+      iconImage: "circle-duotone",
+      iconSize: 0.5,
+      textField: label ?? "",
       textSize: 14.0,
     );
 
@@ -174,7 +170,7 @@ class _HazardMapPageState extends State<HazardMapPage> {
   Future<List<dynamic>> loadEvacuationGeoJson() async {
     final String data = await rootBundle.loadString('assets/naga_evacuation1.geojson');
     final Map<String, dynamic> jsonData = jsonDecode(data);
-    return jsonData['features']; // List of GeoJSON features
+    return jsonData['features'];
   }
 
   Future<List<EvacuationCenter>> loadEvacuationCenters() async {
@@ -237,8 +233,6 @@ class _HazardMapPageState extends State<HazardMapPage> {
     final ByteData? byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     return byteData!.buffer.asUint8List();
   }
-
-
 
   Future<Uint8List> getMarkerIconBytes(Color color, double size) async {
     final recorder = ui.PictureRecorder();
@@ -343,7 +337,6 @@ class _HazardMapPageState extends State<HazardMapPage> {
     evacPins.clear();
   }
 
-
   Future<void> removeFloodLayer() async {
     try {
       final layers = await mapboxMap.style.getStyleLayers();
@@ -371,7 +364,6 @@ class _HazardMapPageState extends State<HazardMapPage> {
       null,
     );
 
-    // Add a pin for this barangay
     await addPin(brgy.lng, brgy.lat, label: brgy.name);
 
     if (floodService.floodPolygons.isNotEmpty) {
@@ -441,7 +433,7 @@ class _HazardMapPageState extends State<HazardMapPage> {
         elevation: 0,
         actions: [
           Transform.scale(
-            scale: 0.8, // change this to make it bigger or smaller
+            scale: 0.8,
             child: Switch(
               value: currentMode == MapMode.Evacuation,
               onChanged: (val) async {
@@ -449,7 +441,6 @@ class _HazardMapPageState extends State<HazardMapPage> {
                   currentMode = val ? MapMode.Evacuation : MapMode.Flood;
                 });
 
-                // Switch layers based on mode
                 if (currentMode == MapMode.Flood) {
                   await removeEvacuationPins();
                   await addFloodLayer();
@@ -636,9 +627,8 @@ class _HazardMapPageState extends State<HazardMapPage> {
           ),
 
           Row(
-            mainAxisAlignment: MainAxisAlignment.center, // center the whole legend
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Low
               Row(
                 children: [
                   Container(
@@ -660,9 +650,8 @@ class _HazardMapPageState extends State<HazardMapPage> {
                   ),
                 ],
               ),
-              const SizedBox(width: 24), // spacing between legend items
+              const SizedBox(width: 24),
 
-              // Medium
               Row(
                 children: [
                   Container(
@@ -684,9 +673,8 @@ class _HazardMapPageState extends State<HazardMapPage> {
                   ),
                 ],
               ),
-              const SizedBox(width: 24), // spacing between legend items
+              const SizedBox(width: 24),
 
-              // High
               Row(
                 children: [
                   Container(
@@ -722,23 +710,17 @@ class _HazardMapPageState extends State<HazardMapPage> {
               onMapCreated: (MapboxMap map) async {
                 mapboxMap = map;
 
-                // Create the annotation managerd
                 _pointAnnotationManager =
                 await mapboxMap.annotations.createPointAnnotationManager();
 
-                // ⏳ Wait for the style to be fully loaded
                 await waitForStyleLoaded();
 
-                // Add the custom evacuation icon
                 await addEvacuationIconToMap();
 
-                // Add evacuation pins to the map if in Evacuation mode
                 if (currentMode == MapMode.Evacuation) {
                   await addEvacuationPinsFromGeoJson();
                 }
 
-                // ✅ Load the evacuation centers into the dropdown list
-                // ✅ Load the evacuation centers into the dropdown list
                 final centers = await loadEvacuationCenters();
                 setState(() {
                   evacuationCenters = centers;
