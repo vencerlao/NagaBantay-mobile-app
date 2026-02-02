@@ -544,7 +544,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                           'description': description,
                           'latitude': loc.latitude,
                           'longitude': loc.longitude,
-                          'my_naga_status': 'Pending',
+                          'my_naga_status': 'Submitted',
                           'phone': phoneNumber,
                           'timestamp': FieldValue.serverTimestamp(),
                         });
