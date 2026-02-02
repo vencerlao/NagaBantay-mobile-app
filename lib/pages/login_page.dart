@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:nagabantay_mobile_app/widgets/navigation_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:nagabantay_mobile_app/services/local_auth_store.dart';
 import 'package:nagabantay_mobile_app/pages/signup_page.dart';
 
 
@@ -65,8 +66,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       setState(() => _isLoading = false);
-
-      // ✅ Pass phoneNumber to NavBar
+      LocalAuthStore.loggedPhone = normalizedPhone;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => NagabantayNavBar(
