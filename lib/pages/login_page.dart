@@ -65,9 +65,16 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       setState(() => _isLoading = false);
+
+      // ✅ Pass phoneNumber to NavBar
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const NagabantayNavBar(initialIndex: 0)),
-        (route) => false,
+        MaterialPageRoute(
+          builder: (_) => NagabantayNavBar(
+            initialIndex: 0,
+            phoneNumber: normalizedPhone,
+          ),
+        ),
+            (route) => false,
       );
 
     } catch (e) {

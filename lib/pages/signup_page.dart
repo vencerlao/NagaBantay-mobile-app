@@ -68,6 +68,7 @@ class _SignUpPageState extends State<SignUpPage> {
     final normalized = _normalizePhone(phoneNumber);
 
     if (exists) {
+      // User exists → go to LoginPage and pass phone
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -75,6 +76,7 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       );
     } else {
+      // New user → go to SetupPage and pass phone
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

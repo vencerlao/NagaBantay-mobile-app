@@ -12,14 +12,18 @@ import '../models/report_draft.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+User? _currentUser;
 File? _pickedImage;
+
 
 final ImagePicker _picker = ImagePicker();
 
 class ReportContinuePage extends StatefulWidget {
   final ReportDraft draft;
-  const ReportContinuePage({super.key, required this.draft});
+  final String phoneNumber;
+  const ReportContinuePage({super.key, required this.draft, required this.phoneNumber,});
 
   @override
   State<ReportContinuePage> createState() => _ReportContinuePageState();
@@ -32,6 +36,9 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
   LatLng? _selectedLocation;
   String _address = 'Fetching address...';
+
+  bool _authChecked = false;
+
 
   void _showSuccessDialog() {
     showDialog(
@@ -84,8 +91,13 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
               ),
               onPressed: () {
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const NagabantayNavBar(initialIndex: 0)),
-                  (route) => false,
+                  MaterialPageRoute(
+                    builder: (_) => NagabantayNavBar(
+                      initialIndex: 0,
+                      phoneNumber: widget.phoneNumber, // ✅ pass the phone number
+                    ),
+                  ),
+                      (route) => false,
                 );
               },
               child: const Text(
@@ -109,8 +121,15 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   void initState() {
     super.initState();
 
-    _descriptionController.text = widget.draft.description ?? '';
+    // Listen for signed-in user
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      setState(() {
+        _currentUser = user;
+        _authChecked = true; // Auth state has been checked
+      });
+    });
 
+    _descriptionController.text = widget.draft.description ?? '';
     _getCurrentLocation();
   }
 
@@ -482,6 +501,8 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                 width: double.infinity,
                 child: ElevatedButton(
                     onPressed: () async {
+                      final phoneNumber = widget.phoneNumber;
+
                       final description = _descriptionController.text.trim();
                       final loc = _selectedLocation;
 
@@ -524,6 +545,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                           'latitude': loc.latitude,
                           'longitude': loc.longitude,
                           'my_naga_status': 'Pending',
+                          'phone': phoneNumber,
                           'timestamp': FieldValue.serverTimestamp(),
                         });
 

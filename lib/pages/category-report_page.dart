@@ -3,7 +3,9 @@ import 'package:nagabantay_mobile_app/pages/continue-report_page.dart';
 import 'package:nagabantay_mobile_app/models/report_draft.dart';
 
 class ReportPage extends StatefulWidget {
-  const ReportPage({super.key});
+  final String phoneNumber;
+
+  const ReportPage({super.key, required this.phoneNumber});
 
   @override
   State<ReportPage> createState() => _ReportPageState();
@@ -22,13 +24,16 @@ class _ReportPageState extends State<ReportPage> {
 
   final ReportDraft draft = ReportDraft();
 
-  void goToNextPage(String selectedCategory) {
+  void goToNextPage(String selectedCategory, String phoneNumber) {
     draft.issue = selectedCategory;
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ReportContinuePage(draft: draft),
+        builder: (_) => ReportContinuePage(
+          draft: draft,
+          phoneNumber: widget.phoneNumber, // use widget.phoneNumber here
+        ),
       ),
     );
   }
@@ -161,7 +166,10 @@ class _ReportPageState extends State<ReportPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ReportContinuePage(draft: draft),
+                        builder: (_) => ReportContinuePage(
+                          draft: draft,
+                          phoneNumber: widget.phoneNumber, // pass the phone number here
+                        ),
                       ),
                     );
                   } catch (e) {
