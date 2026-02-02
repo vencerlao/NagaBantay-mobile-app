@@ -191,7 +191,6 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  // Filter button used in the Information tab
   Widget _filterButton(String label, String filter) {
     final selected = _infoFilter == filter;
     return GestureDetector(
@@ -259,7 +258,6 @@ class _AlertsPageState extends State<AlertsPage> {
                 );
               }
 
-               // Build a simple list of alerts
                return ListView.separated(
                  padding: const EdgeInsets.symmetric(vertical: 8),
                  itemCount: alerts.length,
