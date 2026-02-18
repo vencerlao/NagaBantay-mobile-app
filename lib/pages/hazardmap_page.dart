@@ -717,7 +717,9 @@ class _HazardMapPageState extends State<HazardMapPage> {
 
                 await addEvacuationIconToMap();
 
-                if (currentMode == MapMode.Evacuation) {
+                if (currentMode == MapMode.Flood) {
+                  await addFloodLayer();
+                } else {
                   await addEvacuationPinsFromGeoJson();
                 }
 

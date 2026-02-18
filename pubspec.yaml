@@ -50,6 +50,7 @@ dependencies:
   tflite_flutter: ^0.12.1
   path_provider: ^2.1.5
   image_picker: ^1.2.1
+  audioplayers: ^6.5.1
 
   cupertino_icons: ^1.0.8
   google_fonts: ^5.0.0
@@ -91,6 +92,7 @@ flutter:
     - assets/ml/vocab.json
     - assets/ml/office_labels.json
     - assets/ml/severity_labels.json
+    - assets/sounds/alert.mp3
 
 
 
