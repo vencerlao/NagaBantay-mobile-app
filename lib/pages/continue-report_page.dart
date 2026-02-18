@@ -11,6 +11,7 @@ import '../services/tflite_service.dart';
 import '../models/report_draft.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -198,6 +199,16 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
       setState(() {
         _pickedImage = File(pickedFile.path);
       });
+    }
+  }
+
+  Future<String?> _convertImageToBase64(File imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      return base64Encode(bytes);
+    } catch (e) {
+      print('Image conversion failed: $e');
+      return null;
     }
   }
 
@@ -554,13 +565,21 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                         final nextId = 'R${(maxNumber + 1).toString().padLeft(3, '0')}';
 
                         final docRef = FirebaseFirestore.instance.collection('reports').doc(nextId);
+
+                        String? imageBase64;
+                        if (_pickedImage != null) {
+                          imageBase64 = await _convertImageToBase64(_pickedImage!);
+                        }
+
                         await docRef.set({
                           'report_id': nextId,
                           'issue': widget.draft.issue ?? 'Unknown',
                           'description': description,
-                          'barangay': _barangay ?? 'Unknown',
+                          'barangay': _address,
                           'latitude': loc.latitude,
                           'longitude': loc.longitude,
+                          'location': GeoPoint(loc.latitude, loc.longitude),
+                          'image_attachments': imageBase64 != null ? [imageBase64] : [],
                           'my_naga_status': 'not yet responded',
                           'phone': phoneNumber,
                           'timestamp': FieldValue.serverTimestamp(),
@@ -612,7 +631,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                     elevation: 4,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text('Continue'),
+                  child: const Text('Submit Report'),
                 ),
               ),
             ],
