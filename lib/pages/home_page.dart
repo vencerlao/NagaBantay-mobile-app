@@ -619,6 +619,9 @@ class ReportsListPage extends StatelessWidget {
               final issue = _safeString(data, ['issue', 'category', 'title'], 'Issue');
               final description = _safeString(data, ['description', 'desc', 'details'], '');
               final severity = _safeString(data, ['predicted_severity', 'priority'], 'N/A');
+              final status = (data['my_naga_status'] ?? '').toString().trim().toLowerCase();
+              final isAwaiting = status.contains('awaiting');
+              final existingRating = data['user_rating'];
               final ts = _extractTimestamp(data);
               final timeStr = _formatTimestamp(ts);
 
@@ -717,6 +720,187 @@ class ReportsListPage extends StatelessWidget {
                                 ),
                               ],
                             ),
+
+                            const SizedBox(height: 12),
+
+                            // Rating row for reports awaiting review or already rated (responsive)
+                            if (isAwaiting || existingRating != null)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: existingRating != null
+                                        ? Row(
+                                            children: [
+                                              ...List.generate(5, (i) {
+                                                final starIndex = i + 1;
+                                                final int val = existingRating is int
+                                                    ? existingRating
+                                                    : int.tryParse(existingRating?.toString() ?? '') ?? 0;
+                                                return Icon(
+                                                  starIndex <= val ? PhosphorIcons.starFill : PhosphorIcons.star,
+                                                  size: 18,
+                                                  color: const Color(0xFFFFBF00),
+                                                );
+                                              }),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Rated ${existingRating is int ? existingRating : int.tryParse(existingRating?.toString() ?? '') ?? 0}/5',
+                                                style: const TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 13,
+                                                  fontVariations: [FontVariation('wght', 600)],
+                                                  color: Color(0xFF163A18),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : (isAwaiting
+                                            ? Text(
+                                                'Please rate this report',
+                                                style: const TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 13,
+                                                  fontVariations: [FontVariation('wght', 500)],
+                                                  color: Color(0xFF163A18),
+                                                ),
+                                              )
+                                            : const SizedBox.shrink()),
+                                  ),
+
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(minWidth: 72),
+                                    child: (existingRating != null || !isAwaiting)
+                                        ? const SizedBox.shrink()
+                                        : OutlinedButton.icon(
+                                            icon: Icon(PhosphorIcons.star, color: HomePage.primaryGreen, size: 18),
+                                            label: const Text(
+                                              'Rate',
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 14,
+                                                fontVariations: [FontVariation('wght', 600)],
+                                              ),
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              side: const BorderSide(color: HomePage.primaryGreen),
+                                              foregroundColor: HomePage.primaryGreen,
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                            ),
+                                            onPressed: () async {
+                                              int selected = 0;
+                                              final value = await showDialog<int?>(
+                                                context: context,
+                                                builder: (context) {
+                                                  int selected = 0;
+                                                  return StatefulBuilder(
+                                                    builder: (context, setState) {
+                                                      return AlertDialog(
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                        title: const Text(
+                                                          'Rate this report',
+                                                          style: TextStyle(
+                                                            fontFamily: 'Montserrat',
+                                                            fontVariations: [FontVariation('wght', 700)],
+                                                            color: HomePage.primaryGreen,
+                                                          ),
+                                                        ),
+                                                        content: ConstrainedBox(
+                                                          constraints: BoxConstraints(
+                                                            maxWidth: MediaQuery.of(context).size.width * 0.9,
+                                                          ),
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              const SizedBox(height: 8),
+                                                              FittedBox(
+                                                                fit: BoxFit.scaleDown,
+                                                                child: Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                  children: List.generate(5, (i) {
+                                                                    final idx = i + 1;
+                                                                    return GestureDetector(
+                                                                      onTap: () {
+                                                                        setState(() {
+                                                                          selected = idx;
+                                                                        });
+                                                                      },
+                                                                      behavior: HitTestBehavior.opaque,
+                                                                      child: Container(
+                                                                        width: 44,
+                                                                        height: 44,
+                                                                        alignment: Alignment.center,
+                                                                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                                        child: Icon(
+                                                                          idx <= selected ? PhosphorIcons.starFill : PhosphorIcons.star,
+                                                                          color: const Color(0xFFFFBF00),
+                                                                          size: 28,
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  }),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            style: TextButton.styleFrom(
+                                                              foregroundColor: HomePage.primaryGreen,
+                                                              textStyle: const TextStyle(
+                                                                fontFamily: 'Montserrat',
+                                                                fontSize: 14,
+                                                                fontVariations: [FontVariation('wght', 600)],
+                                                              ),
+                                                            ),
+                                                            onPressed: () => Navigator.of(context).pop(),
+                                                            child: const Text('Cancel'),
+                                                          ),
+                                                          ElevatedButton(
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor: HomePage.primaryGreen,
+                                                              textStyle: const TextStyle(
+                                                                fontFamily: 'Montserrat',
+                                                                fontSize: 14,
+                                                                fontVariations: [FontVariation('wght', 700)],
+                                                              ),
+                                                            ),
+                                                            onPressed: selected > 0
+                                                                ? () {
+                                                                    Navigator.of(context).pop(selected);
+                                                                  }
+                                                                : null,
+                                                            child: const Text('Submit'),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              );
+
+                                              if (value != null && value > 0) {
+                                                try {
+                                                  await FirebaseFirestore.instance.collection('reports').doc(docs[index].id).update({
+                                                    'user_rating': value,
+                                                    'user_rating_at': FieldValue.serverTimestamp(),
+                                                    'my_naga_status': 'done',
+                                                  });
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Thank you for your rating')),
+                                                  );
+                                                } catch (e) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text('Failed to submit rating: $e')),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          ),
+                                  ),
+                                ],
+                              ),
                           ],
                         ),
                       ),
