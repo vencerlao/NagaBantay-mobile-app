@@ -99,7 +99,6 @@ class _ChangePinPageState extends State<ChangePinPage> {
           ? const Center(child: CircularProgressIndicator())
           : Stack(
         children: [
-          // Map
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(

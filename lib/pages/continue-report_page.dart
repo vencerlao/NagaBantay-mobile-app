@@ -34,6 +34,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   final TextEditingController _descriptionController = TextEditingController();
   final MapController _mapController = MapController();
 
+  String? _barangay;
   LatLng? _selectedLocation;
   String _address = 'Fetching address...';
 
@@ -94,7 +95,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                   MaterialPageRoute(
                     builder: (_) => NagabantayNavBar(
                       initialIndex: 0,
-                      phoneNumber: widget.phoneNumber, // ✅ pass the phone number
+                      phoneNumber: widget.phoneNumber,
                     ),
                   ),
                       (route) => false,
@@ -121,11 +122,10 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   void initState() {
     super.initState();
 
-    // Listen for signed-in user
     FirebaseAuth.instance.authStateChanges().listen((user) {
       setState(() {
         _currentUser = user;
-        _authChecked = true; // Auth state has been checked
+        _authChecked = true;
       });
     });
 
@@ -140,42 +140,50 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   }
 
   Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      setState(() {
-        _address = 'Location services are disabled';
-      });
-      return;
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         setState(() {
-          _address = 'Location permissions denied';
+          _address = 'Location services are disabled';
+          _selectedLocation = LatLng(13.6218, 123.1948);
         });
         return;
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
+
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _address = 'Location permission denied';
+          _selectedLocation = LatLng(13.6218, 123.1948);
+        });
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
       setState(() {
-        _address = 'Location permissions permanently denied';
+        _selectedLocation =
+            LatLng(position.latitude, position.longitude);
       });
-      return;
+
+      await _getAddressFromLatLng(_selectedLocation!);
+
+    } catch (e) {
+      print("Location error: $e");
+      setState(() {
+        _address = 'Unable to fetch location';
+        _selectedLocation = LatLng(13.6218, 123.1948);
+      });
     }
-
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-
-    setState(() {
-      _selectedLocation = LatLng(position.latitude, position.longitude);
-    });
-
-    _getAddressFromLatLng(_selectedLocation!);
   }
 
   Future<void> _pickImage() async {
@@ -202,8 +210,14 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
         setState(() {
+          _barangay =
+              place.subLocality ??
+                  place.locality ??
+                  place.subAdministrativeArea ??
+                  'Unknown Barangay';
+
           _address =
-          '${place.street ?? ''}, ${place.locality ?? ''}, ${place.country ?? ''}';
+          '${_barangay ?? ''}, ${place.locality ?? ''}, ${place.country ?? ''}';
         });
       } else {
         setState(() {
@@ -542,9 +556,10 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                           'report_id': nextId,
                           'issue': widget.draft.issue ?? 'Unknown',
                           'description': description,
+                          'barangay': _barangay ?? 'Unknown',
                           'latitude': loc.latitude,
                           'longitude': loc.longitude,
-                          'my_naga_status': 'Submitted',
+                          'my_naga_status': 'not yet responded',
                           'phone': phoneNumber,
                           'timestamp': FieldValue.serverTimestamp(),
                         });
