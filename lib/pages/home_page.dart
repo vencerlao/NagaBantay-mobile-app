@@ -646,7 +646,7 @@ class ReportsListPage extends StatelessWidget {
                     children: [
                       Container(
                         width: 6,
-                        height: 60,
+                        height: 80,
                         margin: const EdgeInsets.only(right: 12, top: 4),
                         decoration: BoxDecoration(
                           color: _statusColor(severity),
