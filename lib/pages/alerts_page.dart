@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:nagabantay_mobile_app/services/local_auth_store.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class AlertsPage extends StatefulWidget {
   final int initialIndex;
@@ -12,6 +13,9 @@ class AlertsPage extends StatefulWidget {
 }
 
 class _AlertsPageState extends State<AlertsPage> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  Set<String> _existingAlertIds = {};
+
   String _getMonthName(int month) {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
@@ -31,12 +35,23 @@ class _AlertsPageState extends State<AlertsPage> {
   static const Color selectedTextColor = Colors.white;
   static const Color unselectedTextColor = Color(0xFF0F4A17);
   static const Color borderColor = Color(0xFFB7D1BB);
+  static const Color newAlertTextColor = Color(0xFF740A03);
+  static const Color newAlertAccentColor = Color(0xFFC3110C);
+
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
     _loadUserBarangay();
+  }
+
+  void _playAlertSound() async {
+    try {
+      await _audioPlayer.play(AssetSource('sounds/alert.mp3'));
+    } catch (e) {
+      debugPrint('Failed to play alert sound: $e');
+    }
   }
 
   String _normalizePhone(String raw) {
@@ -242,6 +257,31 @@ class _AlertsPageState extends State<AlertsPage> {
               if (snapshot.hasError) return const Center(child: Text('Unable to load alerts'));
               final alerts = snapshot.data ?? [];
 
+              final now = DateTime.now();
+
+              final newAlerts = alerts.where((a) {
+                final ts = a['createdAt'] as Timestamp?;
+                if (ts == null) return false;
+                final alertDate = ts.toDate();
+                return now.difference(alertDate).inHours <= 24;
+              }).toList();
+
+              final olderAlerts = alerts.where((a) {
+                final ts = a['createdAt'] as Timestamp?;
+                if (ts == null) return false;
+                final alertDate = ts.toDate();
+                return now.difference(alertDate).inHours > 24;
+              }).toList();
+
+              final newAlertIds = alerts.map((a) => a['id'] as String).toSet();
+              final newlyAddedAlerts = newAlertIds.difference(_existingAlertIds);
+
+              if (newlyAddedAlerts.isNotEmpty) {
+                _playAlertSound();
+              }
+              _existingAlertIds = newAlertIds;
+
+
               if (alerts.isEmpty) {
                 return Center(
                   child: Padding(
@@ -258,71 +298,126 @@ class _AlertsPageState extends State<AlertsPage> {
                 );
               }
 
-               return ListView.separated(
-                 padding: const EdgeInsets.symmetric(vertical: 8),
-                 itemCount: alerts.length,
-                 separatorBuilder: (_, __) => const SizedBox(height: 12),
-                 itemBuilder: (context, index) {
-                   final data = alerts[index];
-                   final ts = data['createdAt'] as Timestamp?;
-                   final d = ts?.toDate();
-
-                   return GestureDetector(
-                     onTap: () => _showAlertDetails(context, data),
-                     child: Container(
-                       padding: const EdgeInsets.all(12),
-                       decoration: BoxDecoration(
-                         color: unselectedBgColor,
-                         borderRadius: BorderRadius.circular(14),
-                         border: Border.all(color: headerTextColor, width: 1.2),
-                       ),
-                       child: Row(
-                         children: [
-                           const Icon(Icons.warning_rounded, size: 36, color: headerTextColor),
-                           const SizedBox(width: 12),
-                           Expanded(
-                             child: Column(
-                               crossAxisAlignment: CrossAxisAlignment.start,
-                               children: [
-                                 Text(
-                                   data['subject'] ?? 'Alert',
-                                   maxLines: 1,
-                                   overflow: TextOverflow.ellipsis,
-                                   style: TextStyle(
-                                     fontFamily: 'Montserrat',
-                                     fontSize: 16,
-                                     fontVariations: const [FontVariation('wght', 600)],
-                                     color: headerTextColor,
-                                   ),
-                                 ),
-                                 const SizedBox(height: 4),
-                                 Text(
-                                   '${data['from'] ?? ''} | ${d != null ? '${_getMonthName(d.month)} ${d.day}, ${d.year}' : '-'}',
-                                   maxLines: 1,
-                                   overflow: TextOverflow.ellipsis,
-                                   style: TextStyle(
-                                     fontFamily: 'Montserrat',
-                                     fontSize: 12,
-                                     fontVariations: const [FontVariation('wght', 400)],
-                                     color: headerTextColor,
-                                   ),
-                                 ),
-                               ],
-                             ),
-                           ),
-                           const Icon(Icons.chevron_right, size: 24, color: Colors.black54),
-                         ],
-                       ),
-                     ),
-                   );
-                 },
-               );
-             },
+              return ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  if (newAlerts.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'New Alerts',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontSize: 18,
+                          fontVariations: [FontVariation('wght', 700)],
+                          color: headerTextColor,
+                        ),
+                      ),
+                    ),
+                    ...newAlerts.map((data) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _alertTile(data, isNew: true),
+                    )).toList(),
+                    const SizedBox(height: 12),
+                  ],
+                  if (olderAlerts.isNotEmpty) ...[
+                    if (newAlerts.isNotEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'Older Alerts',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontSize: 18,
+                            fontVariations: [FontVariation('wght', 700)],
+                            color: headerTextColor,
+                          ),
+                        ),
+                      ),
+                    ...olderAlerts.map((data) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _alertTile(data),
+                    )).toList(),
+                  ],
+                ],
+              );
+            },
            ),
          ),
        ],
      );
    }
+
+  Widget _alertTile(Map<String, dynamic> data, {bool isNew = false}) {
+    final ts = data['createdAt'] as Timestamp?;
+    final d = ts?.toDate();
+
+    final Color bgColor = isNew
+        ? const Color(0xFFFFE5E5)
+        : unselectedBgColor;
+
+    final Color borderClr = isNew
+        ? newAlertAccentColor
+        : headerTextColor;
+
+    final Color iconClr = isNew
+        ? newAlertAccentColor
+        : headerTextColor;
+
+    final Color textClr = isNew
+        ? newAlertTextColor
+        : headerTextColor;
+
+    return GestureDetector(
+      onTap: () => _showAlertDetails(context, data),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderClr, width: 1.2),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.warning_rounded, size: 36, color: iconClr),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data['subject'] ?? 'Alert',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 16,
+                      fontVariations: [FontVariation('wght', 600)],
+                      color: iconClr,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${data['from'] ?? ''} | ${d != null ? '${_getMonthName(d.month)} ${d.day}, ${d.year}' : '-'}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      fontVariations: [FontVariation('wght', 400)],
+                      color: textClr,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 24, color: Colors.black54),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildSafetyGuidesContent() {
     return SingleChildScrollView(

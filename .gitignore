@@ -12,6 +12,15 @@
 .swiftpm/
 migrate_working_dir/
 
+# Environment variables (DO NOT COMMIT SECRETS)
+.env
+.env.*
+
+# GeoJSON files (map data)
+*.geojson
+naga_flood.geojson
+naga_evacuation1.geojson
+
 # IntelliJ related
 *.iml
 *.ipr
