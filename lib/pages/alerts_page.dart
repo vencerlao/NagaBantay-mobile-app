@@ -12,6 +12,11 @@ class AlertsPage extends StatefulWidget {
   State<AlertsPage> createState() => _AlertsPageState();
 }
 
+Map<String, Set<String>> _existingAlertIdsByFilter = {
+  'MY': {},
+  'ALL': {},
+};
+
 class _AlertsPageState extends State<AlertsPage> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   Set<String> _existingAlertIds = {};
@@ -255,10 +260,11 @@ class _AlertsPageState extends State<AlertsPage> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) return const Center(child: Text('Unable to load alerts'));
-              final alerts = snapshot.data ?? [];
 
+              final alerts = snapshot.data ?? [];
               final now = DateTime.now();
 
+              // Separate new vs older alerts
               final newAlerts = alerts.where((a) {
                 final ts = a['createdAt'] as Timestamp?;
                 if (ts == null) return false;
@@ -273,26 +279,33 @@ class _AlertsPageState extends State<AlertsPage> {
                 return now.difference(alertDate).inHours > 24;
               }).toList();
 
+              // Get current filter
+              final filterKey = _infoFilter; // 'MY' or 'ALL'
               final newAlertIds = alerts.map((a) => a['id'] as String).toSet();
-              final newlyAddedAlerts = newAlertIds.difference(_existingAlertIds);
+              final newlyAddedAlerts = newAlertIds.difference(_existingAlertIdsByFilter[filterKey]!);
 
+              // Play sound only for new alerts in current filter
               if (newlyAddedAlerts.isNotEmpty) {
                 _playAlertSound();
               }
-              _existingAlertIds = newAlertIds;
 
+              // Update the tracked alert IDs for this filter
+              _existingAlertIdsByFilter[filterKey] = newAlertIds;
 
               if (alerts.isEmpty) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Text(
-                      _infoFilter == 'MY' ? 'No current alerts in your area' : 'No alerts available',
+                      _infoFilter == 'MY'
+                          ? 'No current alerts in your area'
+                          : 'No alerts available',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          color: Color(0xFF063B13),
-                          fontVariations: const [FontVariation('wght', 400)],),
+                        fontFamily: 'Montserrat',
+                        color: Color(0xFF063B13),
+                        fontVariations: [FontVariation('wght', 400)],
+                      ),
                     ),
                   ),
                 );
@@ -317,7 +330,7 @@ class _AlertsPageState extends State<AlertsPage> {
                     ...newAlerts.map((data) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _alertTile(data, isNew: true),
-                    )).toList(),
+                    )),
                     const SizedBox(height: 12),
                   ],
                   if (olderAlerts.isNotEmpty) ...[
@@ -337,14 +350,14 @@ class _AlertsPageState extends State<AlertsPage> {
                     ...olderAlerts.map((data) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _alertTile(data),
-                    )).toList(),
+                    )),
                   ],
                 ],
               );
             },
-           ),
-         ),
-       ],
+          ),
+        ),
+      ],
      );
    }
 

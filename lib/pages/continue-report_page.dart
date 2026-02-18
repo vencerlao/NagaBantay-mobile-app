@@ -16,7 +16,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 User? _currentUser;
-File? _pickedImage;
 
 
 final ImagePicker _picker = ImagePicker();
@@ -35,6 +34,7 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
   final TextEditingController _descriptionController = TextEditingController();
   final MapController _mapController = MapController();
 
+  File? _pickedImage;
   String? _barangay;
   LatLng? _selectedLocation;
   String _address = 'Fetching address...';
