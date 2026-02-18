@@ -540,16 +540,18 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
                         ..longitude = loc.longitude;
 
                       try {
-                        final querySnapshot = await FirebaseFirestore.instance.collection('reports').get();
-                        int maxNumber = 0;
+                        final reportsRef =
+                        FirebaseFirestore.instance.collection('reports');
 
+                        final querySnapshot = await reportsRef.get();
+
+                        int maxNumber = 0;
                         for (var doc in querySnapshot.docs) {
                           final number = int.tryParse(doc.id.replaceAll(RegExp(r'[^0-9]'), ''));
                           if (number != null && number > maxNumber) maxNumber = number;
                         }
 
-                        final nextNumber = maxNumber + 1;
-                        final nextId = 'R${nextNumber.toString().padLeft(3, '0')}';
+                        final nextId = 'R${(maxNumber + 1).toString().padLeft(3, '0')}';
 
                         final docRef = FirebaseFirestore.instance.collection('reports').doc(nextId);
                         await docRef.set({
