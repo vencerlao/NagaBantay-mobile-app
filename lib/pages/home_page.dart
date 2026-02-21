@@ -6,6 +6,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:nagabantay_mobile_app/pages/hazardmap_page.dart';
 import 'package:nagabantay_mobile_app/services/flood_map_service.dart';
 import 'package:nagabantay_mobile_app/services/local_auth_store.dart';
+import 'package:nagabantay_mobile_app/widgets/analytics_dashboard_widget.dart';
 
 class HomePage extends StatelessWidget {
   final String phoneNumber;
@@ -18,23 +19,27 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                 _buildHeader(),
-                const SizedBox(height: 20),
-                _buildReportStatusSection(context),
-                const SizedBox(height: 26),
+                const SizedBox(height:18),
+                _buildAnalyticsHeader(),
+                const SizedBox(height: 6),
+                Expanded(
+                  flex: 6,
+                  child: _buildAnalyticsDashboard(),
+                ),
+                const SizedBox(height: 16),
                 _buildMapHeader(context),
-                const SizedBox(height: 10),
-                const MapOverviewCard(),
-                const SizedBox(height: 30),
-              ],
-            ),
+                const SizedBox(height: 6),
+                const Expanded(
+                  flex: 4,
+                  child: MapOverviewCard(),
+                ),
+            ],
           ),
         ),
       ),
@@ -63,9 +68,9 @@ class HomePage extends StatelessWidget {
                 final data = snapshot.data!.data();
                 if (data != null) {
                   firstName = (data['firstName'] ??
-                      data['firstname'] ??
-                      data['first_name'] ??
-                      '')
+                          data['firstname'] ??
+                          data['first_name'] ??
+                          '')
                       .toString()
                       .trim();
                   if (firstName.isEmpty) {
@@ -105,8 +110,19 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // ── HOME PAGE: shows only Submitted + Ratings ──────────────────────────────
-  Widget _buildReportStatusSection(BuildContext context) {
+  Widget _buildAnalyticsHeader() {
+    return const Text(
+      'Reports in Your Barangay',
+      style: TextStyle(
+        fontFamily: 'Montserrat',
+        fontSize: 18,
+        fontVariations: [FontVariation('wght', 700)],
+        color: primaryGreen,
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsDashboard() {
     String userPhoneId = _normalizePhone(phoneNumber);
     if (userPhoneId.isEmpty) {
       final stored = LocalAuthStore.loggedPhone;
@@ -115,126 +131,150 @@ class HomePage extends StatelessWidget {
       }
     }
 
-    if (userPhoneId.isEmpty) {
-      return _buildStaticReportStatus(context, submitted: 0, ratings: 0);
-    }
-
-    final reportsQuery = FirebaseFirestore.instance
-        .collection('reports')
-        .where('phone', isEqualTo: userPhoneId);
-
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: reportsQuery.snapshots(),
-      builder: (context, reportsSnapshot) {
-        int ratings = 0;
-        int submitted = 0;
-
-        if (reportsSnapshot.hasData) {
-          for (final doc in reportsSnapshot.data!.docs) {
-            final data = doc.data();
-            final status =
-            (data['my_naga_status'] ?? '').toString().trim().toLowerCase();
-            if (status == 'awaiting review' || status == 'awaiting_review') {
-              ratings++;
-            } else if (status == 'not yet responded' ||
-                status == 'not_yet_responded') {
-              submitted++;
-            }
-          }
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Report Status',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                fontSize: 18,
-                fontVariations: [FontVariation('wght', 700)],
-                color: primaryGreen,
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userPhoneId)
+          .snapshots(),
+      builder: (context, userSnapshot) {
+        if (!userSnapshot.hasData || userSnapshot.data == null) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: borderGreen, width: 1.5),
+            ),
+            child: Center(
+              child: Text(
+                'Loading barangay information...',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _compactStatusChip(
-                  context,
-                  icon: PhosphorIcons.fileTextFill,
-                  label: 'Submitted',
-                  count: submitted,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ReportsListPage(
-                        title: 'Submitted',
-                        userPhone: userPhoneId,
-                        statusFilter: 'not yet responded',
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                _compactStatusChip(
-                  context,
-                  icon: PhosphorIcons.starFill,
-                  label: 'For Rating',
-                  count: ratings,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ReportsListPage(
-                        title: 'For Rating',
-                        userPhone: userPhoneId,
-                        statusFilter: 'awaiting review',
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          );
+        }
+
+        final userData = userSnapshot.data!.data() ?? {};
+        final userBarangay = (userData['barangay'] ?? '').toString().trim();
+
+        if (userBarangay.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: borderGreen, width: 1.5),
             ),
-          ],
+            child: Center(
+              child: Text(
+                'Barangay information not available',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return FutureBuilder<Map<String, int>>(
+          future: _fetchBarangayReportCounts(userBarangay),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderGreen, width: 1.5),
+                ),
+                child: const SizedBox(
+                  height: 60,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderGreen, width: 1.5),
+                ),
+                child: Center(
+                  child: Text(
+                    'Error loading analytics',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final categoryCounts = snapshot.data ?? {};
+            return AnalyticsDashboardWidget(
+              categoryCounts: categoryCounts,
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildStaticReportStatus(BuildContext context,
-      {required int submitted, required int ratings}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Report Status',
-          style: TextStyle(
-            fontFamily: 'Montserrat',
-            fontSize: 16,
-            fontVariations: [FontVariation('wght', 700)],
-            color: primaryGreen,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            _compactStatusChip(
-              context,
-              icon: PhosphorIcons.fileTextFill,
-              label: 'Submitted',
-              count: submitted,
-            ),
-            const SizedBox(width: 10),
-            _compactStatusChip(
-              context,
-              icon: PhosphorIcons.starFill,
-              label: 'For Rating',
-              count: ratings,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  Future<Map<String, int>> _fetchBarangayReportCounts(String barangay) async {
+    final Map<String, int> counts = {};
 
+    for (final label in allIssueLabels) {
+      counts[label] = 0;
+    }
+
+    if (barangay.isEmpty) {
+      return counts;
+    }
+
+    try {
+      final normalizedBarangay = barangay.trim().toLowerCase();
+      final allReportsSnapshot = await FirebaseFirestore.instance
+          .collection('reports')
+          .get();
+
+      for (final doc in allReportsSnapshot.docs) {
+        final data = doc.data();
+        
+        final reportBarangay = (data['barangay'] ?? '').toString().trim();
+        final normalizedReportBarangay = reportBarangay.toLowerCase();
+        
+        if (normalizedReportBarangay != normalizedBarangay) {
+          continue; 
+        }
+
+        final category = (data['category'] ?? '').toString().trim();
+
+        if (category.isNotEmpty && allIssueLabels.contains(category)) {
+          counts[category] = (counts[category] ?? 0) + 1;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching barangay report counts: $e');
+    }
+
+    return counts;
+  }
 
   Widget _buildMapHeader(BuildContext context) {
     return Row(
@@ -268,70 +308,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _compactStatusChip(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required int count,
-        VoidCallback? onTap,
-      }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderGreen, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: const Color.fromRGBO(0, 0, 0, 0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: primaryGreen),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    fontVariations: [FontVariation('wght', 600)],
-                    color: primaryGreen,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: primaryGreen,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  count.toString(),
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 12,
-                    fontVariations: [FontVariation('wght', 700)],
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
       color: Colors.white,
@@ -359,7 +335,8 @@ class HomePage extends StatelessWidget {
       String? docId;
       if (user != null && user.phoneNumber != null) {
         docId = _normalizePhone(user.phoneNumber!);
-        debugPrint('FINAL DOC ID USED (auth): $docId (from ${user.phoneNumber})');
+        debugPrint(
+            'FINAL DOC ID USED (auth): $docId (from ${user.phoneNumber})');
       }
       if (docId == null) {
         final stored = LocalAuthStore.loggedPhone;
@@ -377,7 +354,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ── MapOverviewCard ────────────────────────────────────────────────────────────
 class MapOverviewCard extends StatelessWidget {
   const MapOverviewCard({super.key});
 
@@ -392,7 +368,7 @@ class MapOverviewCard extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(14),
       child: AspectRatio(
-        aspectRatio: 16 / 9,
+        aspectRatio: 16 / 7,
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
@@ -444,7 +420,7 @@ class MapOverviewCard extends StatelessWidget {
   }
 }
 
-// ── ReportsListPage ────────────────────────────────────────────────────────────
+
 class ReportsListPage extends StatelessWidget {
   final String title;
   final String userPhone;
@@ -568,11 +544,11 @@ class ReportsListPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final data = docs[index].data();
               final issue =
-              _safeString(data, ['issue', 'category', 'title'], 'Issue');
+                  _safeString(data, ['issue', 'category', 'title'], 'Issue');
               final description =
-              _safeString(data, ['description', 'desc', 'details'], '');
+                  _safeString(data, ['description', 'desc', 'details'], '');
               final severity =
-              _safeString(data, ['predicted_severity', 'priority'], 'N/A');
+                  _safeString(data, ['predicted_severity', 'priority'], 'N/A');
               final status = (data['my_naga_status'] ?? '')
                   .toString()
                   .trim()
@@ -665,7 +641,7 @@ class ReportsListPage extends StatelessWidget {
                                 ),
                                 SizedBox(
                                   width:
-                                  MediaQuery.of(context).size.width * 0.5,
+                                      MediaQuery.of(context).size.width * 0.5,
                                   child: Text(
                                     timeStr,
                                     style: const TextStyle(
@@ -687,276 +663,281 @@ class ReportsListPage extends StatelessWidget {
                                   Expanded(
                                     child: existingRating != null
                                         ? Row(
-                                      children: [
-                                        ...List.generate(5, (i) {
-                                          final starIndex = i + 1;
-                                          final int val =
-                                          existingRating is int
-                                              ? existingRating
-                                              : int.tryParse(
-                                              existingRating
-                                                  ?.toString() ??
-                                                  '') ??
-                                              0;
-                                          return Icon(
-                                            starIndex <= val
-                                                ? PhosphorIcons.starFill
-                                                : PhosphorIcons.star,
-                                            size: 18,
-                                            color: const Color(0xFFFFBF00),
-                                          );
-                                        }),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Rated ${existingRating is int ? existingRating : int.tryParse(existingRating?.toString() ?? '') ?? 0}/5',
-                                          style: const TextStyle(
-                                            fontFamily: 'Montserrat',
-                                            fontSize: 13,
-                                            fontVariations: [
-                                              FontVariation('wght', 600)
+                                            children: [
+                                              ...List.generate(5, (i) {
+                                                final starIndex = i + 1;
+                                                final int val =
+                                                    existingRating is int
+                                                        ? existingRating
+                                                        : int.tryParse(
+                                                                existingRating
+                                                                        ?.toString() ??
+                                                                    '') ??
+                                                            0;
+                                                return Icon(
+                                                  starIndex <= val
+                                                      ? PhosphorIcons.starFill
+                                                      : PhosphorIcons.star,
+                                                  size: 18,
+                                                  color: const Color(
+                                                      0xFFFFBF00),
+                                                );
+                                              }),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Rated ${existingRating is int ? existingRating : int.tryParse(existingRating?.toString() ?? '') ?? 0}/5',
+                                                style: const TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 13,
+                                                  fontVariations: [
+                                                    FontVariation('wght', 600)
+                                                  ],
+                                                  color: Color(0xFF163A18),
+                                                ),
+                                              ),
                                             ],
-                                            color: Color(0xFF163A18),
-                                          ),
-                                        ),
-                                      ],
-                                    )
+                                          )
                                         : (isAwaiting
-                                        ? const Text(
-                                      'Please rate this report',
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 13,
-                                        fontVariations: [
-                                          FontVariation('wght', 500)
-                                        ],
-                                        color: Color(0xFF163A18),
-                                      ),
-                                    )
-                                        : const SizedBox.shrink()),
+                                            ? const Text(
+                                                'Please rate this report',
+                                                style: TextStyle(
+                                                  fontFamily: 'Montserrat',
+                                                  fontSize: 13,
+                                                  fontVariations: [
+                                                    FontVariation('wght', 500)
+                                                  ],
+                                                  color: Color(0xFF163A18),
+                                                ),
+                                              )
+                                            : const SizedBox.shrink()),
                                   ),
                                   ConstrainedBox(
                                     constraints:
-                                    const BoxConstraints(minWidth: 72),
+                                        const BoxConstraints(minWidth: 72),
                                     child: (existingRating != null ||
-                                        !isAwaiting)
+                                            !isAwaiting)
                                         ? const SizedBox.shrink()
                                         : OutlinedButton.icon(
-                                      icon: Icon(PhosphorIcons.star,
-                                          color: HomePage.primaryGreen,
-                                          size: 18),
-                                      label: const Text(
-                                        'Rate',
-                                        style: TextStyle(
-                                          fontFamily: 'Montserrat',
-                                          fontSize: 14,
-                                          fontVariations: [
-                                            FontVariation('wght', 600)
-                                          ],
-                                        ),
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(
-                                            color: HomePage.primaryGreen),
-                                        foregroundColor:
-                                        HomePage.primaryGreen,
-                                        padding:
-                                        const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 8),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(8)),
-                                      ),
-                                      onPressed: () async {
-                                        final value =
-                                        await showDialog<int?>(
-                                          context: context,
-                                          builder: (context) {
-                                            int selected = 0;
-                                            return StatefulBuilder(
-                                              builder:
-                                                  (context, setState) {
-                                                return AlertDialog(
-                                                  shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                      BorderRadius
-                                                          .circular(
-                                                          12)),
-                                                  title: const Text(
-                                                    'Rate this report',
-                                                    style: TextStyle(
-                                                      fontFamily:
-                                                      'Montserrat',
-                                                      fontVariations: [
-                                                        FontVariation(
-                                                            'wght', 700)
-                                                      ],
-                                                      color: HomePage
-                                                          .primaryGreen,
-                                                    ),
-                                                  ),
-                                                  content: ConstrainedBox(
-                                                    constraints:
-                                                    BoxConstraints(
-                                                      maxWidth: MediaQuery.of(
-                                                          context)
-                                                          .size
-                                                          .width *
-                                                          0.9,
-                                                    ),
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                      MainAxisSize
-                                                          .min,
-                                                      children: [
-                                                        const SizedBox(
-                                                            height: 8),
-                                                        FittedBox(
-                                                          fit: BoxFit
-                                                              .scaleDown,
-                                                          child: Row(
-                                                            mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                            children: List
-                                                                .generate(
-                                                                5,
-                                                                    (i) {
-                                                                  final idx =
-                                                                      i + 1;
-                                                                  return GestureDetector(
-                                                                    onTap:
-                                                                        () {
-                                                                      setState(
-                                                                              () {
-                                                                            selected =
-                                                                                idx;
-                                                                          });
-                                                                    },
-                                                                    behavior:
-                                                                    HitTestBehavior
-                                                                        .opaque,
-                                                                    child:
-                                                                    Container(
-                                                                      width:
-                                                                      44,
-                                                                      height:
-                                                                      44,
-                                                                      alignment:
-                                                                      Alignment.center,
-                                                                      padding: const EdgeInsets
-                                                                          .symmetric(
-                                                                          horizontal:
-                                                                          4),
-                                                                      child:
-                                                                      Icon(
-                                                                        idx <= selected
-                                                                            ? PhosphorIcons.starFill
-                                                                            : PhosphorIcons.star,
-                                                                        color: const Color(
-                                                                            0xFFFFBF00),
-                                                                        size:
-                                                                        28,
-                                                                      ),
-                                                                    ),
-                                                                  );
-                                                                }),
+                                            icon: Icon(PhosphorIcons.star,
+                                                color: HomePage.primaryGreen,
+                                                size: 18),
+                                            label: const Text(
+                                              'Rate',
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat',
+                                                fontSize: 14,
+                                                fontVariations: [
+                                                  FontVariation('wght', 600)
+                                                ],
+                                              ),
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              side: const BorderSide(
+                                                  color:
+                                                      HomePage.primaryGreen),
+                                              foregroundColor:
+                                                  HomePage.primaryGreen,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8),
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          8)),
+                                            ),
+                                            onPressed: () async {
+                                              final value =
+                                                  await showDialog<int?>(
+                                                context: context,
+                                                builder: (context) {
+                                                  int selected = 0;
+                                                  return StatefulBuilder(
+                                                    builder:
+                                                        (context, setState) {
+                                                      return AlertDialog(
+                                                        shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        12)),
+                                                        title: const Text(
+                                                          'Rate this report',
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                                'Montserrat',
+                                                            fontVariations: [
+                                                              FontVariation(
+                                                                  'wght', 700)
+                                                            ],
+                                                            color: HomePage
+                                                                .primaryGreen,
                                                           ),
                                                         ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      style: TextButton
-                                                          .styleFrom(
-                                                        foregroundColor:
-                                                        HomePage
-                                                            .primaryGreen,
-                                                        textStyle:
-                                                        const TextStyle(
-                                                          fontFamily:
-                                                          'Montserrat',
-                                                          fontSize: 14,
-                                                          fontVariations: [
-                                                            FontVariation(
-                                                                'wght',
-                                                                600)
-                                                          ],
+                                                        content:
+                                                            ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                            maxWidth: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.9,
+                                                          ),
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              const SizedBox(
+                                                                  height: 8),
+                                                              FittedBox(
+                                                                fit: BoxFit
+                                                                    .scaleDown,
+                                                                child: Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .center,
+                                                                  children: List
+                                                                      .generate(
+                                                                          5,
+                                                                          (i) {
+                                                                    final idx =
+                                                                        i + 1;
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () {
+                                                                        setState(
+                                                                            () {
+                                                                          selected =
+                                                                              idx;
+                                                                        });
+                                                                      },
+                                                                      behavior:
+                                                                          HitTestBehavior
+                                                                              .opaque,
+                                                                      child:
+                                                                          Container(
+                                                                        width:
+                                                                            44,
+                                                                        height:
+                                                                            44,
+                                                                        alignment:
+                                                                            Alignment.center,
+                                                                        padding: const EdgeInsets
+                                                                            .symmetric(
+                                                                            horizontal:
+                                                                                4),
+                                                                        child:
+                                                                            Icon(
+                                                                          idx <= selected
+                                                                              ? PhosphorIcons.starFill
+                                                                              : PhosphorIcons.star,
+                                                                          color: const Color(
+                                                                              0xFFFFBF00),
+                                                                          size:
+                                                                              28,
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  }),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
                                                         ),
-                                                      ),
-                                                      onPressed: () =>
-                                                          Navigator.of(
-                                                              context)
-                                                              .pop(),
-                                                      child: const Text(
-                                                          'Cancel'),
-                                                    ),
-                                                    ElevatedButton(
-                                                      style: ElevatedButton
-                                                          .styleFrom(
-                                                        backgroundColor:
-                                                        HomePage
-                                                            .primaryGreen,
-                                                        textStyle:
-                                                        const TextStyle(
-                                                          fontFamily:
-                                                          'Montserrat',
-                                                          fontSize: 14,
-                                                          fontVariations: [
-                                                            FontVariation(
-                                                                'wght',
-                                                                700)
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      onPressed: selected >
-                                                          0
-                                                          ? () {
-                                                        Navigator.of(
-                                                            context)
-                                                            .pop(
-                                                            selected);
-                                                      }
-                                                          : null,
-                                                      child: const Text(
-                                                          'Submit'),
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-                                        );
-                                        if (value != null && value > 0) {
-                                          try {
-                                            await FirebaseFirestore
-                                                .instance
-                                                .collection('reports')
-                                                .doc(docs[index].id)
-                                                .update({
-                                              'user_rating': value,
-                                              'user_rating_at': FieldValue
-                                                  .serverTimestamp(),
-                                              'my_naga_status': 'done',
-                                            });
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                  content: Text(
-                                                      'Thank you for your rating')),
-                                            );
-                                          } catch (e) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                  content: Text(
-                                                      'Failed to submit rating: $e')),
-                                            );
-                                          }
-                                        }
-                                      },
-                                    ),
+                                                        actions: [
+                                                          TextButton(
+                                                            style: TextButton
+                                                                .styleFrom(
+                                                              foregroundColor:
+                                                                  HomePage
+                                                                      .primaryGreen,
+                                                              textStyle:
+                                                                  const TextStyle(
+                                                                fontFamily:
+                                                                    'Montserrat',
+                                                                fontSize: 14,
+                                                                fontVariations: [
+                                                                  FontVariation(
+                                                                      'wght',
+                                                                      600)
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            onPressed: () =>
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop(),
+                                                            child: const Text(
+                                                                'Cancel'),
+                                                          ),
+                                                          ElevatedButton(
+                                                            style: ElevatedButton
+                                                                .styleFrom(
+                                                              backgroundColor:
+                                                                  HomePage
+                                                                      .primaryGreen,
+                                                              textStyle:
+                                                                  const TextStyle(
+                                                                fontFamily:
+                                                                    'Montserrat',
+                                                                fontSize: 14,
+                                                                fontVariations: [
+                                                                  FontVariation(
+                                                                      'wght',
+                                                                      700)
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            onPressed: selected >
+                                                                    0
+                                                                ? () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pop(
+                                                                            selected);
+                                                                  }
+                                                                : null,
+                                                            child: const Text(
+                                                                'Submit'),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              );
+                                              if (value != null && value > 0) {
+                                                try {
+                                                  await FirebaseFirestore
+                                                      .instance
+                                                      .collection('reports')
+                                                      .doc(docs[index].id)
+                                                      .update({
+                                                    'user_rating': value,
+                                                    'user_rating_at':
+                                                        FieldValue
+                                                            .serverTimestamp(),
+                                                    'my_naga_status': 'done',
+                                                  });
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    const SnackBar(
+                                                        content: Text(
+                                                            'Thank you for your rating')),
+                                                  );
+                                                } catch (e) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                        content: Text(
+                                                            'Failed to submit rating: $e')),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          ),
                                   ),
                                 ],
                               ),
