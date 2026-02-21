@@ -9,9 +9,7 @@ import 'package:nagabantay_mobile_app/services/local_auth_store.dart';
 
 class HomePage extends StatelessWidget {
   final String phoneNumber;
-
   const HomePage({super.key, required this.phoneNumber});
-
   static const Color primaryGreen = Color(0xFF06370B);
   static const Color borderGreen = Color(0xFF669062);
 
@@ -59,12 +57,10 @@ class HomePage extends StatelessWidget {
             stream: _userDocStream(),
             builder: (context, snapshot) {
               String firstName = 'User';
-
               if (snapshot.connectionState == ConnectionState.active &&
                   snapshot.hasData &&
                   snapshot.data!.exists) {
                 final data = snapshot.data!.data();
-
                 if (data != null) {
                   firstName = (data['firstName'] ??
                       data['firstname'] ??
@@ -72,13 +68,11 @@ class HomePage extends StatelessWidget {
                       '')
                       .toString()
                       .trim();
-
                   if (firstName.isEmpty) {
                     firstName = 'User';
                   }
                 }
               }
-
               return Text.rich(
                 TextSpan(
                   children: [
@@ -111,74 +105,40 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  // ── HOME PAGE: shows only Submitted + Ratings ──────────────────────────────
   Widget _buildReportStatusSection(BuildContext context) {
     String userPhoneId = _normalizePhone(phoneNumber);
     if (userPhoneId.isEmpty) {
       final stored = LocalAuthStore.loggedPhone;
-      if (stored != null && stored.isNotEmpty) userPhoneId = _normalizePhone(stored);
+      if (stored != null && stored.isNotEmpty) {
+        userPhoneId = _normalizePhone(stored);
+      }
     }
 
     if (userPhoneId.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Report Status',
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 22,
-              fontVariations: [FontVariation('wght', 700)],
-              color: primaryGreen,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _bigStatusCard(icon: PhosphorIcons.checkCircleFill, label: 'Completed', count: 0)),
-              const SizedBox(width: 12),
-              Expanded(child: _bigStatusCard(icon: PhosphorIcons.starFill, label: 'Ratings', count: 0)),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _smallStatusChip(context, PhosphorIcons.fileTextFill, 'Submitted', 0, primaryGreen, statusFilter: 'not yet responded'),
-              const SizedBox(width: 8),
-              _smallStatusChip(context, PhosphorIcons.hourglassFill, 'Pending', 0, primaryGreen, statusFilter: 'pending'),
-              const SizedBox(width: 8),
-              _smallStatusChip(context, PhosphorIcons.xCircleFill, 'Cancelled', 0, primaryGreen, statusFilter: 'cancelled'),
-            ],
-          ),
-        ],
-      );
+      return _buildStaticReportStatus(context, submitted: 0, ratings: 0);
     }
 
-    final reportsQuery = FirebaseFirestore.instance.collection('reports').where('phone', isEqualTo: userPhoneId);
+    final reportsQuery = FirebaseFirestore.instance
+        .collection('reports')
+        .where('phone', isEqualTo: userPhoneId);
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: reportsQuery.snapshots(),
       builder: (context, reportsSnapshot) {
-        int completed = 0;
         int ratings = 0;
         int submitted = 0;
-        int pending = 0;
-        int cancelled = 0;
 
         if (reportsSnapshot.hasData) {
           for (final doc in reportsSnapshot.data!.docs) {
             final data = doc.data();
-            final status = (data['my_naga_status'] ?? '').toString().trim().toLowerCase();
-
-            if (status == 'done' || status == 'completed') {
-              completed++;
-            } else if (status == 'awaiting review' || status == 'awaiting_review') {
+            final status =
+            (data['my_naga_status'] ?? '').toString().trim().toLowerCase();
+            if (status == 'awaiting review' || status == 'awaiting_review') {
               ratings++;
-            } else if (status == 'not yet responded' || status == 'not_yet_responded') {
+            } else if (status == 'not yet responded' ||
+                status == 'not_yet_responded') {
               submitted++;
-            } else if (status == 'pending') {
-              pending++;
-            } else if (status == 'cancelled' || status == 'canceled') {
-              cancelled++;
             }
           }
         }
@@ -190,61 +150,47 @@ class HomePage extends StatelessWidget {
               'Report Status',
               style: TextStyle(
                 fontFamily: 'Montserrat',
-                fontSize: 22,
+                fontSize: 18,
                 fontVariations: [FontVariation('wght', 700)],
                 color: primaryGreen,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             Row(
               children: [
-                Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ReportsListPage(
-                            title: 'Completed',
-                            userPhone: userPhoneId,
-                            statusFilter: 'done',
-                          ),
-                        ),
-                      );
-                    },
-                    child: _bigStatusCard(icon: PhosphorIcons.checkCircleFill, label: 'Completed', count: completed),
+                _compactStatusChip(
+                  context,
+                  icon: PhosphorIcons.fileTextFill,
+                  label: 'Submitted',
+                  count: submitted,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReportsListPage(
+                        title: 'Submitted',
+                        userPhone: userPhoneId,
+                        statusFilter: 'not yet responded',
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ReportsListPage(
-                            title: 'Ratings',
-                            userPhone: userPhoneId,
-                            statusFilter: 'awaiting review',
-                          ),
-                        ),
-                      );
-                    },
-                    child: _bigStatusCard(icon: PhosphorIcons.starFill, label: 'Ratings', count: ratings),
+                const SizedBox(width: 10),
+                _compactStatusChip(
+                  context,
+                  icon: PhosphorIcons.starFill,
+                  label: 'For Rating',
+                  count: ratings,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReportsListPage(
+                        title: 'For Rating',
+                        userPhone: userPhoneId,
+                        statusFilter: 'awaiting review',
+                      ),
+                    ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                _smallStatusChip(context, PhosphorIcons.fileTextFill, 'Submitted', submitted, primaryGreen, statusFilter: 'not yet responded', userPhone: userPhoneId),
-                const SizedBox(width: 8),
-                _smallStatusChip(context, PhosphorIcons.hourglassFill, 'Pending', pending, primaryGreen, statusFilter: 'pending', userPhone: userPhoneId),
-                const SizedBox(width: 8),
-                _smallStatusChip(context, PhosphorIcons.xCircleFill, 'Cancelled', cancelled, primaryGreen, statusFilter: 'cancelled', userPhone: userPhoneId),
               ],
             ),
           ],
@@ -252,6 +198,43 @@ class HomePage extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildStaticReportStatus(BuildContext context,
+      {required int submitted, required int ratings}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Report Status',
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 16,
+            fontVariations: [FontVariation('wght', 700)],
+            color: primaryGreen,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            _compactStatusChip(
+              context,
+              icon: PhosphorIcons.fileTextFill,
+              label: 'Submitted',
+              count: submitted,
+            ),
+            const SizedBox(width: 10),
+            _compactStatusChip(
+              context,
+              icon: PhosphorIcons.starFill,
+              label: 'For Rating',
+              count: ratings,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
 
   Widget _buildMapHeader(BuildContext context) {
     return Row(
@@ -285,111 +268,60 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _bigStatusCard({
-    required IconData icon,
-    required String label,
-    required int count,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: _cardDecoration(),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: primaryGreen,
-            child: Icon(icon, color: Colors.white, size: 28),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontVariations: const [FontVariation('wght', 700)],
-              color: primaryGreen,
-            ),
-          ),
-          Text(
-            count.toString(),
-            style: const TextStyle(
-              fontSize: 24,
-              fontVariations: const [FontVariation('wght', 800)],
-              color: primaryGreen,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _smallStatusChip(BuildContext context, IconData icon, String label, int count, Color color, {String? statusFilter, String? userPhone}) {
+  Widget _compactStatusChip(
+      BuildContext context, {
+        required IconData icon,
+        required String label,
+        required int count,
+        VoidCallback? onTap,
+      }) {
     return Expanded(
       child: GestureDetector(
-        onTap: () async {
-          String docId = userPhone ?? '';
-          if (docId.isEmpty) {
-            final u = FirebaseAuth.instance.currentUser;
-            if (u != null && u.phoneNumber != null) {
-              docId = _normalizePhone(u.phoneNumber!);
-            }
-            if (docId.isEmpty) {
-              final stored = LocalAuthStore.loggedPhone;
-              if (stored != null && stored.isNotEmpty) {
-                docId = _normalizePhone(stored);
-              }
-            }
-          }
-
-          if (docId.isEmpty) return;
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ReportsListPage(
-                title: label,
-                userPhone: docId,
-                statusFilter: statusFilter,
-              ),
-            ),
-          );
-        },
+        onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF669062), width: 2.0),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderGreen, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: const Color.fromRGBO(0, 0, 0, 0.03),
+                color: const Color.fromRGBO(0, 0, 0, 0.02),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             children: [
-              Icon(icon, size: 20, color: color),
-              const SizedBox(height: 6),
-              FittedBox(
-                fit: BoxFit.scaleDown,
+              Icon(icon, size: 20, color: primaryGreen),
+              const SizedBox(width: 8),
+              Expanded(
                 child: Text(
                   label,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Montserrat',
-                    fontVariations: const [FontVariation('wght', 700)],
-                    fontSize: 11,
-                    color: color,
+                    fontSize: 12,
+                    fontVariations: [FontVariation('wght', 600)],
+                    color: primaryGreen,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(
-                count.toString(),
-                style: TextStyle(
-                  fontVariations: const [FontVariation('wght', 800)],
-                  fontSize: 14,
-                  color: color,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: primaryGreen,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 12,
+                    fontVariations: [FontVariation('wght', 700)],
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -398,6 +330,7 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
@@ -416,18 +349,18 @@ class HomePage extends StatelessWidget {
 
   String _normalizePhone(String raw) {
     final digitsOnly = raw.replaceAll(RegExp(r'[^0-9]'), '');
-    return digitsOnly.length > 10 ? digitsOnly.substring(digitsOnly.length - 10) : digitsOnly;
+    return digitsOnly.length > 10
+        ? digitsOnly.substring(digitsOnly.length - 10)
+        : digitsOnly;
   }
 
   Stream<DocumentSnapshot<Map<String, dynamic>>> _userDocStream() {
     return FirebaseAuth.instance.authStateChanges().asyncExpand((user) {
       String? docId;
-
       if (user != null && user.phoneNumber != null) {
         docId = _normalizePhone(user.phoneNumber!);
         debugPrint('FINAL DOC ID USED (auth): $docId (from ${user.phoneNumber})');
       }
-
       if (docId == null) {
         final stored = LocalAuthStore.loggedPhone;
         if (stored != null && stored.isNotEmpty) {
@@ -435,14 +368,16 @@ class HomePage extends StatelessWidget {
           debugPrint(' FINAL DOC ID USED (local store): $docId');
         }
       }
-
       if (docId == null || docId.isEmpty) return const Stream.empty();
-
-      return FirebaseFirestore.instance.collection('users').doc(docId).snapshots();
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(docId)
+          .snapshots();
     });
   }
 }
 
+// ── MapOverviewCard ────────────────────────────────────────────────────────────
 class MapOverviewCard extends StatelessWidget {
   const MapOverviewCard({super.key});
 
@@ -509,15 +444,23 @@ class MapOverviewCard extends StatelessWidget {
   }
 }
 
+// ── ReportsListPage ────────────────────────────────────────────────────────────
 class ReportsListPage extends StatelessWidget {
   final String title;
   final String userPhone;
   final String? statusFilter;
 
-  const ReportsListPage({super.key, required this.title, required this.userPhone, this.statusFilter});
+  const ReportsListPage({
+    super.key,
+    required this.title,
+    required this.userPhone,
+    this.statusFilter,
+  });
 
   Query<Map<String, dynamic>> _buildQuery() {
-    return FirebaseFirestore.instance.collection('reports').where('phone', isEqualTo: userPhone);
+    return FirebaseFirestore.instance
+        .collection('reports')
+        .where('phone', isEqualTo: userPhone);
   }
 
   String _formatTimestamp(dynamic ts) {
@@ -528,7 +471,6 @@ class ReportsListPage extends StatelessWidget {
       else if (ts is DateTime) d = ts;
       else if (ts is int) d = DateTime.fromMillisecondsSinceEpoch(ts);
       else return ts.toString();
-
       final local = d.toLocal();
       final month = local.month.toString().padLeft(2, '0');
       final day = local.day.toString().padLeft(2, '0');
@@ -543,13 +485,20 @@ class ReportsListPage extends StatelessWidget {
   }
 
   dynamic _extractTimestamp(Map<String, dynamic> data) {
-    for (final key in ['createdAt', 'timestamp', 'date_created', 'dateCreated', 'time_created']) {
+    for (final key in [
+      'createdAt',
+      'timestamp',
+      'date_created',
+      'dateCreated',
+      'time_created'
+    ]) {
       if (data.containsKey(key) && data[key] != null) return data[key];
     }
     return null;
   }
 
-  String _safeString(Map<String, dynamic> data, List<String> keys, [String fallback = '']) {
+  String _safeString(Map<String, dynamic> data, List<String> keys,
+      [String fallback = '']) {
     for (final k in keys) {
       final v = data[k];
       if (v != null) return v.toString();
@@ -583,18 +532,23 @@ class ReportsListPage extends StatelessWidget {
         stream: query.snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: \\${snapshot.error}'));
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-          List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = snapshot.data!.docs;
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+              snapshot.data!.docs;
           if (statusFilter != null) {
             final norm = statusFilter!.toString().trim().toLowerCase();
             docs = docs.where((d) {
-              final s = (d.data()['my_naga_status'] ?? '').toString().trim().toLowerCase();
+              final s = (d.data()['my_naga_status'] ?? '')
+                  .toString()
+                  .trim()
+                  .toLowerCase();
               return s == norm;
             }).toList();
           }
-
           if (docs.isEmpty) {
             return const Center(
               child: Text(
@@ -602,24 +556,27 @@ class ReportsListPage extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   color: Color(0xFF063B13),
-                  fontVariations: [
-                    FontVariation('wght', 400),
-                  ],
+                  fontVariations: [FontVariation('wght', 400)],
                 ),
               ),
             );
           }
-
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
             itemCount: docs.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final data = docs[index].data();
-              final issue = _safeString(data, ['issue', 'category', 'title'], 'Issue');
-              final description = _safeString(data, ['description', 'desc', 'details'], '');
-              final severity = _safeString(data, ['predicted_severity', 'priority'], 'N/A');
-              final status = (data['my_naga_status'] ?? '').toString().trim().toLowerCase();
+              final issue =
+              _safeString(data, ['issue', 'category', 'title'], 'Issue');
+              final description =
+              _safeString(data, ['description', 'desc', 'details'], '');
+              final severity =
+              _safeString(data, ['predicted_severity', 'priority'], 'N/A');
+              final status = (data['my_naga_status'] ?? '')
+                  .toString()
+                  .trim()
+                  .toLowerCase();
               final isAwaiting = status.contains('awaiting');
               final existingRating = data['user_rating'];
               final ts = _extractTimestamp(data);
@@ -653,12 +610,10 @@ class ReportsListPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
-
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Issue (title)
                             Text(
                               issue,
                               style: const TextStyle(
@@ -683,18 +638,18 @@ class ReportsListPage extends StatelessWidget {
                               maxLines: 4,
                               overflow: TextOverflow.ellipsis,
                             ),
-
                             const SizedBox(height: 10),
-
                             Wrap(
                               crossAxisAlignment: WrapCrossAlignment.center,
                               spacing: 12,
                               runSpacing: 6,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: _statusColor(severity).withAlpha((0.08 * 255).round()),
+                                    color: _statusColor(severity)
+                                        .withAlpha((0.08 * 255).round()),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -702,17 +657,22 @@ class ReportsListPage extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: _statusColor(severity),
-                                      fontVariations: const [FontVariation('wght', 700)],
+                                      fontVariations: const [
+                                        FontVariation('wght', 700)
+                                      ],
                                     ),
                                   ),
                                 ),
                                 SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.5,
+                                  width:
+                                  MediaQuery.of(context).size.width * 0.5,
                                   child: Text(
                                     timeStr,
                                     style: const TextStyle(
                                         fontSize: 12,
-                                        fontVariations: [FontVariation('wght', 400)],
+                                        fontVariations: [
+                                          FontVariation('wght', 400)
+                                        ],
                                         color: Colors.black54),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -720,184 +680,283 @@ class ReportsListPage extends StatelessWidget {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 12),
-
-                            // Rating row for reports awaiting review or already rated (responsive)
                             if (isAwaiting || existingRating != null)
                               Row(
                                 children: [
                                   Expanded(
                                     child: existingRating != null
                                         ? Row(
-                                            children: [
-                                              ...List.generate(5, (i) {
-                                                final starIndex = i + 1;
-                                                final int val = existingRating is int
-                                                    ? existingRating
-                                                    : int.tryParse(existingRating?.toString() ?? '') ?? 0;
-                                                return Icon(
-                                                  starIndex <= val ? PhosphorIcons.starFill : PhosphorIcons.star,
-                                                  size: 18,
-                                                  color: const Color(0xFFFFBF00),
-                                                );
-                                              }),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                'Rated ${existingRating is int ? existingRating : int.tryParse(existingRating?.toString() ?? '') ?? 0}/5',
-                                                style: const TextStyle(
-                                                  fontFamily: 'Montserrat',
-                                                  fontSize: 13,
-                                                  fontVariations: [FontVariation('wght', 600)],
-                                                  color: Color(0xFF163A18),
-                                                ),
-                                              ),
+                                      children: [
+                                        ...List.generate(5, (i) {
+                                          final starIndex = i + 1;
+                                          final int val =
+                                          existingRating is int
+                                              ? existingRating
+                                              : int.tryParse(
+                                              existingRating
+                                                  ?.toString() ??
+                                                  '') ??
+                                              0;
+                                          return Icon(
+                                            starIndex <= val
+                                                ? PhosphorIcons.starFill
+                                                : PhosphorIcons.star,
+                                            size: 18,
+                                            color: const Color(0xFFFFBF00),
+                                          );
+                                        }),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Rated ${existingRating is int ? existingRating : int.tryParse(existingRating?.toString() ?? '') ?? 0}/5',
+                                          style: const TextStyle(
+                                            fontFamily: 'Montserrat',
+                                            fontSize: 13,
+                                            fontVariations: [
+                                              FontVariation('wght', 600)
                                             ],
-                                          )
+                                            color: Color(0xFF163A18),
+                                          ),
+                                        ),
+                                      ],
+                                    )
                                         : (isAwaiting
-                                            ? Text(
-                                                'Please rate this report',
-                                                style: const TextStyle(
-                                                  fontFamily: 'Montserrat',
-                                                  fontSize: 13,
-                                                  fontVariations: [FontVariation('wght', 500)],
-                                                  color: Color(0xFF163A18),
-                                                ),
-                                              )
-                                            : const SizedBox.shrink()),
+                                        ? const Text(
+                                      'Please rate this report',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat',
+                                        fontSize: 13,
+                                        fontVariations: [
+                                          FontVariation('wght', 500)
+                                        ],
+                                        color: Color(0xFF163A18),
+                                      ),
+                                    )
+                                        : const SizedBox.shrink()),
                                   ),
-
                                   ConstrainedBox(
-                                    constraints: const BoxConstraints(minWidth: 72),
-                                    child: (existingRating != null || !isAwaiting)
+                                    constraints:
+                                    const BoxConstraints(minWidth: 72),
+                                    child: (existingRating != null ||
+                                        !isAwaiting)
                                         ? const SizedBox.shrink()
                                         : OutlinedButton.icon(
-                                            icon: Icon(PhosphorIcons.star, color: HomePage.primaryGreen, size: 18),
-                                            label: const Text(
-                                              'Rate',
-                                              style: TextStyle(
-                                                fontFamily: 'Montserrat',
-                                                fontSize: 14,
-                                                fontVariations: [FontVariation('wght', 600)],
-                                              ),
-                                            ),
-                                            style: OutlinedButton.styleFrom(
-                                              side: const BorderSide(color: HomePage.primaryGreen),
-                                              foregroundColor: HomePage.primaryGreen,
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                            ),
-                                            onPressed: () async {
-                                              int selected = 0;
-                                              final value = await showDialog<int?>(
-                                                context: context,
-                                                builder: (context) {
-                                                  int selected = 0;
-                                                  return StatefulBuilder(
-                                                    builder: (context, setState) {
-                                                      return AlertDialog(
-                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                        title: const Text(
-                                                          'Rate this report',
-                                                          style: TextStyle(
-                                                            fontFamily: 'Montserrat',
-                                                            fontVariations: [FontVariation('wght', 700)],
-                                                            color: HomePage.primaryGreen,
-                                                          ),
-                                                        ),
-                                                        content: ConstrainedBox(
-                                                          constraints: BoxConstraints(
-                                                            maxWidth: MediaQuery.of(context).size.width * 0.9,
-                                                          ),
-                                                          child: Column(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            children: [
-                                                              const SizedBox(height: 8),
-                                                              FittedBox(
-                                                                fit: BoxFit.scaleDown,
-                                                                child: Row(
-                                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                                  children: List.generate(5, (i) {
-                                                                    final idx = i + 1;
-                                                                    return GestureDetector(
-                                                                      onTap: () {
-                                                                        setState(() {
-                                                                          selected = idx;
-                                                                        });
-                                                                      },
-                                                                      behavior: HitTestBehavior.opaque,
-                                                                      child: Container(
-                                                                        width: 44,
-                                                                        height: 44,
-                                                                        alignment: Alignment.center,
-                                                                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                                                                        child: Icon(
-                                                                          idx <= selected ? PhosphorIcons.starFill : PhosphorIcons.star,
-                                                                          color: const Color(0xFFFFBF00),
-                                                                          size: 28,
-                                                                        ),
+                                      icon: Icon(PhosphorIcons.star,
+                                          color: HomePage.primaryGreen,
+                                          size: 18),
+                                      label: const Text(
+                                        'Rate',
+                                        style: TextStyle(
+                                          fontFamily: 'Montserrat',
+                                          fontSize: 14,
+                                          fontVariations: [
+                                            FontVariation('wght', 600)
+                                          ],
+                                        ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(
+                                            color: HomePage.primaryGreen),
+                                        foregroundColor:
+                                        HomePage.primaryGreen,
+                                        padding:
+                                        const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                            BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () async {
+                                        final value =
+                                        await showDialog<int?>(
+                                          context: context,
+                                          builder: (context) {
+                                            int selected = 0;
+                                            return StatefulBuilder(
+                                              builder:
+                                                  (context, setState) {
+                                                return AlertDialog(
+                                                  shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                      BorderRadius
+                                                          .circular(
+                                                          12)),
+                                                  title: const Text(
+                                                    'Rate this report',
+                                                    style: TextStyle(
+                                                      fontFamily:
+                                                      'Montserrat',
+                                                      fontVariations: [
+                                                        FontVariation(
+                                                            'wght', 700)
+                                                      ],
+                                                      color: HomePage
+                                                          .primaryGreen,
+                                                    ),
+                                                  ),
+                                                  content: ConstrainedBox(
+                                                    constraints:
+                                                    BoxConstraints(
+                                                      maxWidth: MediaQuery.of(
+                                                          context)
+                                                          .size
+                                                          .width *
+                                                          0.9,
+                                                    ),
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                      MainAxisSize
+                                                          .min,
+                                                      children: [
+                                                        const SizedBox(
+                                                            height: 8),
+                                                        FittedBox(
+                                                          fit: BoxFit
+                                                              .scaleDown,
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                            children: List
+                                                                .generate(
+                                                                5,
+                                                                    (i) {
+                                                                  final idx =
+                                                                      i + 1;
+                                                                  return GestureDetector(
+                                                                    onTap:
+                                                                        () {
+                                                                      setState(
+                                                                              () {
+                                                                            selected =
+                                                                                idx;
+                                                                          });
+                                                                    },
+                                                                    behavior:
+                                                                    HitTestBehavior
+                                                                        .opaque,
+                                                                    child:
+                                                                    Container(
+                                                                      width:
+                                                                      44,
+                                                                      height:
+                                                                      44,
+                                                                      alignment:
+                                                                      Alignment.center,
+                                                                      padding: const EdgeInsets
+                                                                          .symmetric(
+                                                                          horizontal:
+                                                                          4),
+                                                                      child:
+                                                                      Icon(
+                                                                        idx <= selected
+                                                                            ? PhosphorIcons.starFill
+                                                                            : PhosphorIcons.star,
+                                                                        color: const Color(
+                                                                            0xFFFFBF00),
+                                                                        size:
+                                                                        28,
                                                                       ),
-                                                                    );
-                                                                  }),
-                                                                ),
-                                                              ),
-                                                            ],
+                                                                    ),
+                                                                  );
+                                                                }),
                                                           ),
                                                         ),
-                                                        actions: [
-                                                          TextButton(
-                                                            style: TextButton.styleFrom(
-                                                              foregroundColor: HomePage.primaryGreen,
-                                                              textStyle: const TextStyle(
-                                                                fontFamily: 'Montserrat',
-                                                                fontSize: 14,
-                                                                fontVariations: [FontVariation('wght', 600)],
-                                                              ),
-                                                            ),
-                                                            onPressed: () => Navigator.of(context).pop(),
-                                                            child: const Text('Cancel'),
-                                                          ),
-                                                          ElevatedButton(
-                                                            style: ElevatedButton.styleFrom(
-                                                              backgroundColor: HomePage.primaryGreen,
-                                                              textStyle: const TextStyle(
-                                                                fontFamily: 'Montserrat',
-                                                                fontSize: 14,
-                                                                fontVariations: [FontVariation('wght', 700)],
-                                                              ),
-                                                            ),
-                                                            onPressed: selected > 0
-                                                                ? () {
-                                                                    Navigator.of(context).pop(selected);
-                                                                  }
-                                                                : null,
-                                                            child: const Text('Submit'),
-                                                          ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                              );
-
-                                              if (value != null && value > 0) {
-                                                try {
-                                                  await FirebaseFirestore.instance.collection('reports').doc(docs[index].id).update({
-                                                    'user_rating': value,
-                                                    'user_rating_at': FieldValue.serverTimestamp(),
-                                                    'my_naga_status': 'done',
-                                                  });
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    const SnackBar(content: Text('Thank you for your rating')),
-                                                  );
-                                                } catch (e) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(
-                                                    SnackBar(content: Text('Failed to submit rating: $e')),
-                                                  );
-                                                }
-                                              }
-                                            },
-                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      style: TextButton
+                                                          .styleFrom(
+                                                        foregroundColor:
+                                                        HomePage
+                                                            .primaryGreen,
+                                                        textStyle:
+                                                        const TextStyle(
+                                                          fontFamily:
+                                                          'Montserrat',
+                                                          fontSize: 14,
+                                                          fontVariations: [
+                                                            FontVariation(
+                                                                'wght',
+                                                                600)
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      onPressed: () =>
+                                                          Navigator.of(
+                                                              context)
+                                                              .pop(),
+                                                      child: const Text(
+                                                          'Cancel'),
+                                                    ),
+                                                    ElevatedButton(
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                        backgroundColor:
+                                                        HomePage
+                                                            .primaryGreen,
+                                                        textStyle:
+                                                        const TextStyle(
+                                                          fontFamily:
+                                                          'Montserrat',
+                                                          fontSize: 14,
+                                                          fontVariations: [
+                                                            FontVariation(
+                                                                'wght',
+                                                                700)
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      onPressed: selected >
+                                                          0
+                                                          ? () {
+                                                        Navigator.of(
+                                                            context)
+                                                            .pop(
+                                                            selected);
+                                                      }
+                                                          : null,
+                                                      child: const Text(
+                                                          'Submit'),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                        if (value != null && value > 0) {
+                                          try {
+                                            await FirebaseFirestore
+                                                .instance
+                                                .collection('reports')
+                                                .doc(docs[index].id)
+                                                .update({
+                                              'user_rating': value,
+                                              'user_rating_at': FieldValue
+                                                  .serverTimestamp(),
+                                              'my_naga_status': 'done',
+                                            });
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                  content: Text(
+                                                      'Thank you for your rating')),
+                                            );
+                                          } catch (e) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Failed to submit rating: $e')),
+                                            );
+                                          }
+                                        }
+                                      },
+                                    ),
                                   ),
                                 ],
                               ),
@@ -917,8 +976,12 @@ class ReportsListPage extends StatelessWidget {
 
   Color _statusColor(String severity) {
     final s = severity.toLowerCase();
-    if (s.contains('high') || s.contains('critical') || s.contains('severe')) return Colors.red.shade700;
-    if (s.contains('medium') || s.contains('moderate')) return Colors.orange.shade700;
+    if (s.contains('high') || s.contains('critical') || s.contains('severe')) {
+      return Colors.red.shade700;
+    }
+    if (s.contains('medium') || s.contains('moderate')) {
+      return Colors.orange.shade700;
+    }
     if (s.contains('low') || s.contains('minor')) return Colors.green.shade700;
     return Colors.grey.shade600;
   }
