@@ -267,7 +267,7 @@ class _SetupPageState extends State<SetupPage> {
                     child: DropdownSearch<String>(
                       items: const [
                         'Abella', 'Bagumbayan Norte', 'Bagumbayan Sur', 'Balatas', 'Calauag',
-                        'Cararayan', 'Carolina', 'Conception Grande', 'Conception Pequeña',
+                        'Cararayan', 'Carolina', 'Conception Grande', 'Concepcion Pequeña',
                         'Dayangdang', 'Del Rosario', 'Dinaga', 'Igualdad Interior', 'Lerma',
                         'Liboton', 'Mabolo', 'Pacol', 'Panicuason', 'Peñafrancia', 'Sabang',
                         'San Felipe', 'San Francisco', 'San Isidro', 'Santa Cruz', 'Tabuco',
