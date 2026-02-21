@@ -62,7 +62,6 @@ class PersonalInformationPage extends StatelessWidget {
             title: 'Delete Account',
             isDestructive: true,
             onTap: () {
-              // TODO: confirmation dialog
             },
           ),
         ],
