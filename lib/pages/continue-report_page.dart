@@ -573,16 +573,16 @@ class _ReportContinuePageState extends State<ReportContinuePage> {
 
                         await docRef.set({
                           'report_id': nextId,
-                          'issue': widget.draft.issue ?? 'Unknown',
+                          'category': widget.draft.issue ?? 'Unknown',
                           'description': description,
                           'barangay': _address,
                           'latitude': loc.latitude,
                           'longitude': loc.longitude,
                           'location': GeoPoint(loc.latitude, loc.longitude),
-                          'image_attachments': imageBase64 != null ? [imageBase64] : [],
+                          'image_attachment': imageBase64 != null ? [imageBase64] : [],
                           'my_naga_status': 'not yet responded',
                           'phone': phoneNumber,
-                          'timestamp': FieldValue.serverTimestamp(),
+                          'date_created': FieldValue.serverTimestamp(),
                         });
 
                         _showSuccessDialog();
