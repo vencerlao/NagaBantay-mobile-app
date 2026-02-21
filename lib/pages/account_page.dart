@@ -185,7 +185,6 @@ class _AccountPageState extends State<AccountPage> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // ── Profile header ────────────────────────────────────────────────
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(25, 100, 25, 40),
@@ -282,7 +281,6 @@ class _AccountPageState extends State<AccountPage> {
             ),
           ),
 
-          // ── Scrollable body ───────────────────────────────────────────────
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
@@ -389,7 +387,6 @@ class _AccountPageState extends State<AccountPage> {
   }
 }
 
-// ── Dedicated Report Status Page ───────────────────────────────────────────────
 class ReportStatusPage extends StatelessWidget {
   final String userPhoneId;
 
@@ -547,7 +544,6 @@ class ReportStatusPage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Accent icon container
             Container(
               width: 46,
               height: 46,
@@ -558,7 +554,6 @@ class ReportStatusPage extends StatelessWidget {
               child: Icon(entry.icon, size: 26, color: entry.accent),
             ),
             const SizedBox(width: 14),
-            // Labels
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,7 +580,6 @@ class ReportStatusPage extends StatelessWidget {
                 ],
               ),
             ),
-            // Count badge
             Container(
               constraints: const BoxConstraints(minWidth: 32),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -616,7 +610,6 @@ class ReportStatusPage extends StatelessWidget {
   }
 }
 
-// Helper data class for status entries
 class _StatusEntry {
   final IconData icon;
   final String label;

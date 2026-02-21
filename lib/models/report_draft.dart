@@ -1,5 +1,5 @@
 class ReportDraft {
-  String? issue; // selected issue
+  String? issue;
   String? description;
   String? imagePath;
   double? latitude;

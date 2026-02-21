@@ -200,7 +200,7 @@ class _SetupPageState extends State<SetupPage> {
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [ // Removed mainAxisSize: MainAxisSize.min
+                children: [
                   const Text(
                     'Complete your\naccount setup',
                     style: TextStyle(
